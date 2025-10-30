@@ -38,9 +38,61 @@ const formatNumber = (num: number) => {
     return new Intl.NumberFormat('en-US', { notation: 'compact', compactDisplay: 'short' }).format(num);
 };
 
+const VideoConfirmationModal = ({ video, onClose, onConfirm }: { video: Video | null, onClose: () => void, onConfirm: () => void }) => {
+  if (!video) return null;
+
+  return (
+    <div 
+      className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-entry"
+      onClick={onClose}
+      aria-modal="true"
+      role="dialog"
+    >
+      <div 
+        className="bg-brand-surface border border-brand-surface-light rounded-xl shadow-2xl p-6 w-full max-w-md relative text-center"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button 
+          onClick={onClose} 
+          className="absolute top-3 right-3 text-brand-text-secondary hover:text-brand-text"
+          aria-label="Close dialog"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-brand-accent/20">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-brand-accent" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M10 16.5l6-4.5-6-4.5v9zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" />
+            </svg>
+        </div>
+        <h3 className="text-xl font-bold text-brand-text mt-4">Watch on YouTube?</h3>
+        <p className="text-brand-text-secondary mt-2">Do you want to see the full video?</p>
+        <p className="font-semibold text-brand-text mt-1 truncate" title={video.title}>"{video.title}"</p>
+        <div className="mt-6 flex flex-col-reverse sm:flex-row-reverse gap-3">
+          <button
+            onClick={onConfirm}
+            className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-brand-accent text-base font-medium text-white hover:bg-brand-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-accent sm:w-auto sm:text-sm"
+          >
+            Yes, watch now
+          </button>
+          <button
+            onClick={onClose}
+            type="button"
+            className="w-full inline-flex justify-center rounded-md border border-brand-surface-light shadow-sm px-4 py-2 bg-brand-surface-light text-base font-medium text-brand-text hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:w-auto sm:text-sm"
+          >
+            No, cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const FeaturedView: React.FC<FeaturedViewProps> = ({ videos }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const [filter, setFilter] = useState<FilterType>('all');
+    const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
     const ITEMS_PER_PAGE = 10;
 
     const filteredVideos = useMemo(() => {
@@ -138,8 +190,9 @@ export const FeaturedView: React.FC<FeaturedViewProps> = ({ videos }) => {
                         {paginatedVideos.map((video, index) => (
                             <tr 
                                 key={video.id} 
-                                className="border-b border-brand-surface-light last:border-b-0 hover:bg-brand-surface-light/50 hover:scale-[1.02] transition-transform duration-200 animate-entry"
+                                className="border-b border-brand-surface-light last:border-b-0 hover:bg-brand-surface-light/50 hover:scale-[1.02] transition-transform duration-200 animate-entry cursor-pointer"
                                 style={{ animationDelay: `${index * 50}ms` }}
+                                onClick={() => setSelectedVideo(video)}
                             >
                                 <td className="p-2 sm:p-3 hidden sm:table-cell">
                                     <img src={video.thumbnailUrl} alt={video.title} className="w-24 h-14 rounded-md object-cover" />
@@ -175,6 +228,17 @@ export const FeaturedView: React.FC<FeaturedViewProps> = ({ videos }) => {
                 </button>
             </div>
         </div>
+
+        {selectedVideo && (
+            <VideoConfirmationModal
+                video={selectedVideo}
+                onClose={() => setSelectedVideo(null)}
+                onConfirm={() => {
+                    window.open(`https://www.youtube.com/watch?v=${selectedVideo.id}`, '_blank');
+                    setSelectedVideo(null);
+                }}
+            />
+        )}
     </div>
   );
 };

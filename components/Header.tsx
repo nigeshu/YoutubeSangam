@@ -52,7 +52,6 @@ const HelpModal = ({ onClose }: { onClose: () => void }) => (
     </div>
 );
 
-
 export const Header: React.FC<HeaderProps> = ({ onAnalyze, isLoading, channelInfo, channelUrl, onMenuToggle }) => {
   const [url, setUrl] = useState('');
   const [isHelpVisible, setIsHelpVisible] = useState(false);
@@ -61,11 +60,37 @@ export const Header: React.FC<HeaderProps> = ({ onAnalyze, isLoading, channelInf
     e.preventDefault();
     onAnalyze(url);
   };
+  
+  const Logo = ({ size = 32 }: { size?: number }) => (
+    <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        role="img"
+        aria-label="YouTube Channel Hub Logo"
+        className="text-brand-accent flex-shrink-0"
+    >
+        <path
+            d="M12 2L4 6V18L12 22L20 18V6L12 2Z"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+        <path
+            d="M10 9L15 12L10 15V9Z"
+            fill="currentColor"
+        />
+    </svg>
+  );
 
   return (
     <header className="flex-shrink-0 bg-brand-surface border-b border-brand-surface-light p-4 md:px-6 flex flex-wrap md:flex-nowrap items-center justify-between gap-4">
       {/* Desktop Title */}
-      <div className="hidden md:flex items-center gap-4 flex-shrink min-w-0">
+      <div className="hidden md:flex items-center gap-4 flex-shrink-0 min-w-0">
+        <Logo />
         {channelInfo ? (
             <>
                 <h1 className="text-xl font-bold text-brand-text truncate" title={channelInfo.name}>{channelInfo.name}</h1>
@@ -81,7 +106,8 @@ export const Header: React.FC<HeaderProps> = ({ onAnalyze, isLoading, channelInf
         )}
       </div>
        {/* Mobile Title */}
-      <div className="flex md:hidden items-center gap-2 flex-shrink min-w-0 order-1">
+      <div className="flex md:hidden items-center gap-3 flex-shrink-0 min-w-0 order-1">
+         <Logo size={28} />
          <h1 className="text-lg font-bold text-brand-text truncate">{channelInfo ? channelInfo.name : 'YouTube Channel Hub'}</h1>
       </div>
 

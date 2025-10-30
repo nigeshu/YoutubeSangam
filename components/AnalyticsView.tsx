@@ -155,7 +155,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ videos }) => {
                     <StatCard 
                         title="Total Likes"
                         value={analytics.totalLikes}
-                        icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 18.5V9.5a2.5 2.5 0 012.5-2.5h1.105a2 2 0 001.952-1.558l.8-4A2 2 0 0115.336 2L12 5z" /></svg>}
+                        icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.672l1.318-1.354a4.5 4.5 0 116.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z" /></svg>}
                     />
                 </div>
                  <div className="animate-entry" style={{ animationDelay: '400ms' }}>
