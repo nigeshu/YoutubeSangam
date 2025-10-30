@@ -1,0 +1,5 @@
+{
+  "name": "YouTube Channel Hub",
+  "description": "An application for YouTubers to analyze their channel's past live streams and videos. It provides a calendar view for content scheduling and an analytics dashboard to track views, likes, and watch hours.",
+  "requestFramePermissions": []
+}
