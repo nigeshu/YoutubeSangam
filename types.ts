@@ -3,6 +3,7 @@ export interface Video {
   title: string;
   type: 'video' | 'live' | 'short';
   publishedAt: string; // ISO 8601 string
+  actualStartTime?: string; // ISO 8601 string for live streams
   thumbnailUrl: string;
   views: number;
   likes: number;

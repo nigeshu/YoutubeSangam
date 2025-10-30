@@ -155,6 +155,7 @@ export const fetchChannelData = async (channelUrl: string): Promise<FetchResult>
             const duration = item.contentDetails?.duration ? parseISO8601Duration(item.contentDetails.duration) : 0;
 
             let videoType: 'video' | 'live' | 'short' = 'video';
+            const actualStartTime = item.liveStreamingDetails?.actualStartTime;
             
             // A video is "live" if it was/is a live stream.
             if (item.liveStreamingDetails) {
@@ -171,6 +172,7 @@ export const fetchChannelData = async (channelUrl: string): Promise<FetchResult>
                 title: item.snippet.title,
                 type: videoType,
                 publishedAt: item.snippet.publishedAt,
+                actualStartTime: actualStartTime,
                 thumbnailUrl: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.default.url,
                 views,
                 likes,

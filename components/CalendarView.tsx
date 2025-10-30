@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import type { Video } from '../types';
 
@@ -9,13 +10,24 @@ const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "Ju
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const DAY_NAMES_MOBILE = ["S", "M", "T", "W", "T", "F", "S"];
 
+const getUTCDateKey = (date: Date): string => {
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
 export const CalendarView: React.FC<CalendarViewProps> = ({ videos }) => {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [displayDate, setDisplayDate] = useState(new Date());
 
   const videosByDate = useMemo(() => {
     const map = new Map<string, Video[]>();
     videos.forEach(video => {
-      const dateKey = new Date(video.publishedAt).toISOString().split('T')[0];
+      // Use actualStartTime for live videos if available, otherwise fall back to publishedAt
+      const dateString = video.type === 'live' && video.actualStartTime ? video.actualStartTime : video.publishedAt;
+      const videoDate = new Date(dateString);
+      const dateKey = getUTCDateKey(videoDate);
+      
       if (!map.has(dateKey)) {
         map.set(dateKey, []);
       }
@@ -24,29 +36,32 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ videos }) => {
     return map;
   }, [videos]);
 
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
+  const year = displayDate.getUTCFullYear();
+  const month = displayDate.getUTCMonth();
 
-  const firstDayOfMonth = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDayOfMonth = new Date(Date.UTC(year, month, 1)).getUTCDay();
+  const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
 
   const changeMonth = (offset: number) => {
-    setCurrentDate(prevDate => {
+    setDisplayDate(prevDate => {
       const newDate = new Date(prevDate);
-      newDate.setMonth(newDate.getMonth() + offset);
+      newDate.setUTCDate(1); // Avoid month-end issues
+      newDate.setUTCMonth(newDate.getUTCMonth() + offset);
       return newDate;
     });
   };
 
   const renderCalendarDays = () => {
     const days = [];
+    const todayUTCKey = getUTCDateKey(new Date());
+    
     for (let i = 0; i < firstDayOfMonth; i++) {
       days.push(<div key={`empty-${i}`} className="border-r border-b border-brand-surface-light"></div>);
     }
     for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(year, month, day);
-      const isToday = date.toDateString() === new Date().toDateString();
-      const dateKey = date.toISOString().split('T')[0];
+      const date = new Date(Date.UTC(year, month, day));
+      const dateKey = getUTCDateKey(date);
+      const isToday = dateKey === todayUTCKey;
       const todaysVideos = videosByDate.get(dateKey) || [];
 
       days.push(

@@ -146,7 +146,7 @@ export const FeaturedView: React.FC<FeaturedViewProps> = ({ videos }) => {
                                 </td>
                                 <td className="p-2 sm:p-3 max-w-xs truncate" title={video.title}>{video.title}</td>
                                 <td className="p-2 sm:p-3 capitalize">{video.type}</td>
-                                <td className="p-2 sm:p-3 whitespace-nowrap">{new Date(video.publishedAt).toLocaleDateString()}</td>
+                                <td className="p-2 sm:p-3 whitespace-nowrap">{new Date(video.type === 'live' && video.actualStartTime ? video.actualStartTime : video.publishedAt).toLocaleDateString()}</td>
                                 <td className="p-2 sm:p-3 text-right font-mono">{formatNumber(video.views)}</td>
                                 <td className="p-2 sm:p-3 text-right font-mono">{formatNumber(video.likes)}</td>
                             </tr>
