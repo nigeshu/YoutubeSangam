@@ -27,7 +27,7 @@ export const WelcomeScreen: React.FC = () => {
                             </svg>
                              <div className="absolute inset-0 bg-brand-accent rounded-full opacity-20 animate-ping"></div>
                         </div>
-                        <h2 className="text-3xl md:text-4xl font-bold text-brand-text mt-6 mb-3">Welcome to YT Channel Hub</h2>
+                        <h2 className="text-3xl md:text-4xl font-bold text-brand-text mt-6 mb-3">Welcome to Youtube Sangam</h2>
                         <p className="text-lg text-brand-text-secondary mb-8">
                             Paste a channel link above to unlock insights. Discover content patterns, dive deep into performance analytics, and browse a complete content library.
                         </p>

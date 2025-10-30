@@ -69,7 +69,7 @@ export const Header: React.FC<HeaderProps> = ({ onAnalyze, isLoading, channelInf
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         role="img"
-        aria-label="YouTube Channel Hub Logo"
+        aria-label="Youtube Sangam Logo"
         className="text-brand-accent flex-shrink-0"
     >
         <path
@@ -102,13 +102,13 @@ export const Header: React.FC<HeaderProps> = ({ onAnalyze, isLoading, channelInf
                 </div>
             </>
         ) : (
-            <h1 className="text-xl font-bold text-brand-text">YouTube Channel Hub</h1>
+            <h1 className="text-xl font-bold text-brand-text">Youtube Sangam</h1>
         )}
       </div>
        {/* Mobile Title */}
       <div className="flex md:hidden items-center gap-3 flex-shrink-0 min-w-0 order-1">
          <Logo size={28} />
-         <h1 className="text-lg font-bold text-brand-text truncate">{channelInfo ? channelInfo.name : 'YouTube Channel Hub'}</h1>
+         <h1 className="text-lg font-bold text-brand-text truncate">{channelInfo ? channelInfo.name : 'Youtube Sangam'}</h1>
       </div>
 
       <div className="flex items-center gap-2 w-full md:w-auto md:max-w-md flex-1 md:flex-initial order-3 md:order-2">
