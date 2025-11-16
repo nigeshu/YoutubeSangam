@@ -13,3 +13,31 @@ export interface ChannelInfo {
   name: string;
   subscribers: number;
 }
+
+export interface Goal {
+    id: string;
+    userId: string;
+    text: string;
+    isCompleted: boolean;
+    createdAt: any; // Firebase Timestamp
+}
+
+// From RAWG API
+export interface RawgGame {
+  id: number;
+  name: string;
+  background_image: string;
+  released: string;
+}
+
+// Stored in Firestore
+export interface LibraryGame {
+  id: string; // Firestore doc ID
+  userId: string;
+  gameId: number; // RAWG game ID
+  name: string;
+  backgroundImage: string;
+  released: string;
+  status: 'Planned' | 'Playing' | 'Completed' | 'Pause' | 'Gave Up';
+  addedAt: any; // Firebase Timestamp
+}

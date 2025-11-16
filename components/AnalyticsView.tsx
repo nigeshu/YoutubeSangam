@@ -40,8 +40,8 @@ const StatCard = ({ title, value, icon }: { title: string, value: number, icon: 
     const animatedValue = useCountUp(value);
     
     return (
-        <div className="bg-brand-surface border border-brand-surface-light rounded-xl p-4 sm:p-6 flex items-start gap-4">
-            <div className="bg-brand-surface-light p-3 rounded-lg text-brand-accent">
+        <div className="bg-brand-surface border border-brand-surface-light rounded-lg p-4 sm:p-6 flex items-start gap-4">
+            <div className="bg-brand-surface-light p-3 rounded-md text-brand-accent">
                 {icon}
             </div>
             <div>
@@ -55,7 +55,7 @@ const StatCard = ({ title, value, icon }: { title: string, value: number, icon: 
 const BarChart = ({ data, title }: { data: { label: string, value: number, color: string }[], title: string }) => {
     const maxValue = Math.max(...data.map(d => d.value), 1); // Avoid division by zero
     return (
-        <div className="bg-brand-surface border border-brand-surface-light rounded-xl p-4 sm:p-6">
+        <div className="bg-brand-surface border border-brand-surface-light rounded-lg p-4 sm:p-6">
             <h3 className="text-lg font-bold mb-4">{title}</h3>
             <div className="space-y-4">
                 {data.map(({ label, value, color }) => (
@@ -66,7 +66,7 @@ const BarChart = ({ data, title }: { data: { label: string, value: number, color
                                 className="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ease-out"
                                 style={{ width: `${(value / maxValue) * 100}%`, backgroundColor: color }}
                             ></div>
-                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-white z-10">{value}</span>
+                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-black mix-blend-screen z-10">{formatNumber(value)}</span>
                         </div>
                     </div>
                 ))}
@@ -117,16 +117,16 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ videos }) => {
 
 
     const contentBreakdownData = [
-        { label: 'Videos', value: analytics.videoCount, color: '#3b82f6' }, // blue-500
-        { label: 'Live Streams', value: analytics.liveCount, color: '#ef4444' }, // red-500
-        { label: 'Shorts', value: analytics.shortCount, color: '#8b5cf6' }, // violet-500
+        { label: 'Videos', value: analytics.videoCount, color: '#EAEAEA' },
+        { label: 'Live Streams', value: analytics.liveCount, color: '#AAAAAA' },
+        { label: 'Shorts', value: analytics.shortCount, color: '#666666' },
     ];
 
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const uploadScheduleData = analytics.uploadsByDay.map((count, i) => ({
         label: dayNames[i],
         value: count,
-        color: '#10b981', // emerald-500
+        color: '#EAEAEA',
     }));
 
     return (

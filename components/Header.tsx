@@ -7,6 +7,8 @@ interface HeaderProps {
   channelInfo: ChannelInfo | null;
   channelUrl: string;
   onMenuToggle: () => void;
+  user: any | null;
+  onSignOut: () => void;
 }
 
 const formatSubscribers = (num: number) => {
@@ -16,7 +18,7 @@ const formatSubscribers = (num: number) => {
 const HelpModal = ({ onClose }: { onClose: () => void }) => (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
         <div 
-            className="bg-brand-surface border border-brand-surface-light rounded-xl shadow-2xl p-6 w-full max-w-md relative"
+            className="bg-brand-surface border border-brand-surface-light rounded-lg p-6 w-full max-w-md relative"
             onClick={(e) => e.stopPropagation()}
         >
             <button 
@@ -38,7 +40,7 @@ const HelpModal = ({ onClose }: { onClose: () => void }) => (
                     <img 
                         src="https://i.postimg.cc/m2ZdNRG1/Screenshot-2025-10-30-090810.png" 
                         alt="Screenshot showing where to find channel info" 
-                        className="mt-2 rounded-lg border border-brand-surface-light w-full"
+                        className="mt-2 rounded-md border border-brand-surface-light w-full"
                     />
                 </div>
                 <div>
@@ -52,7 +54,7 @@ const HelpModal = ({ onClose }: { onClose: () => void }) => (
     </div>
 );
 
-export const Header: React.FC<HeaderProps> = ({ onAnalyze, isLoading, channelInfo, channelUrl, onMenuToggle }) => {
+export const Header: React.FC<HeaderProps> = ({ onAnalyze, isLoading, channelInfo, channelUrl, onMenuToggle, user, onSignOut }) => {
   const [url, setUrl] = useState('');
   const [isHelpVisible, setIsHelpVisible] = useState(false);
 
@@ -95,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({ onAnalyze, isLoading, channelInf
             <>
                 <h1 className="text-xl font-bold text-brand-text truncate" title={channelInfo.name}>{channelInfo.name}</h1>
                 <div className="flex items-center gap-1 text-sm text-brand-text-secondary bg-brand-surface-light px-3 py-1 rounded-full flex-shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-brand-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-brand-text" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     <span>{formatSubscribers(channelInfo.subscribers)}</span>
@@ -116,7 +118,7 @@ export const Header: React.FC<HeaderProps> = ({ onAnalyze, isLoading, channelInf
             <button
                 type="button"
                 onClick={() => setIsHelpVisible(true)}
-                className="p-2.5 bg-brand-surface-light rounded-lg text-brand-text-secondary hover:bg-brand-accent hover:text-white transition-colors flex-shrink-0"
+                className="p-2.5 bg-brand-surface-light rounded-md text-brand-text-secondary hover:bg-brand-surface-light/80 hover:text-white transition-colors flex-shrink-0"
                 title="How to find channel link"
                 aria-label="How to find channel link"
             >
@@ -130,13 +132,13 @@ export const Header: React.FC<HeaderProps> = ({ onAnalyze, isLoading, channelInf
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     placeholder="Paste channel link..."
-                    className="w-full bg-brand-bg border border-brand-surface-light rounded-lg py-2 pl-4 pr-28 text-brand-text placeholder-brand-text-secondary focus:outline-none focus:ring-2 focus:ring-brand-accent"
+                    className="w-full bg-brand-bg border border-brand-surface-light rounded-md py-2 pl-4 pr-28 text-brand-text placeholder-brand-text-secondary focus:outline-none focus:ring-2 focus:ring-brand-accent"
                     disabled={isLoading}
                 />
                 <button
                     type="submit"
                     disabled={isLoading}
-                    className="absolute inset-y-0 right-0 m-1 px-4 py-1.5 bg-brand-accent text-white rounded-md text-sm font-semibold hover:bg-brand-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-brand-bg focus:ring-brand-accent disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors"
+                    className="absolute inset-y-0 right-0 m-1 px-4 py-1.5 bg-brand-accent text-gray-900 rounded font-semibold hover:bg-brand-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-brand-bg focus:ring-brand-accent disabled:bg-gray-500 disabled:text-white disabled:cursor-not-allowed transition-colors"
                 >
                     {isLoading ? '...' : 'Analyze'}
                 </button>
@@ -146,7 +148,7 @@ export const Header: React.FC<HeaderProps> = ({ onAnalyze, isLoading, channelInf
              <button
                 onClick={() => onAnalyze(channelUrl)}
                 disabled={isLoading}
-                className="p-2.5 bg-brand-surface-light rounded-lg text-brand-text-secondary hover:bg-brand-accent hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                className="p-2.5 bg-brand-surface-light rounded-md text-brand-text-secondary hover:bg-brand-surface-light/80 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                 title="Refresh Data"
                 aria-label="Refresh Data"
             >
@@ -162,6 +164,18 @@ export const Header: React.FC<HeaderProps> = ({ onAnalyze, isLoading, channelInf
                 )}
             </button>
         )}
+        {user && (
+            <button
+                onClick={onSignOut}
+                className="p-2.5 bg-brand-surface-light rounded-md text-brand-text-secondary hover:bg-red-500/10 hover:text-red-400 transition-colors flex-shrink-0"
+                title="Sign Out"
+                aria-label="Sign Out"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+            </button>
+        )}
       </div>
 
        {/* Mobile Menu Toggle */}
@@ -169,7 +183,7 @@ export const Header: React.FC<HeaderProps> = ({ onAnalyze, isLoading, channelInf
         <div className="flex items-center order-2 md:hidden">
             <button
             onClick={onMenuToggle}
-            className="p-2.5 bg-brand-surface-light rounded-lg text-brand-text-secondary hover:bg-brand-accent hover:text-white transition-colors"
+            className="p-2.5 bg-brand-surface-light rounded-md text-brand-text-secondary hover:bg-brand-surface-light/80 hover:text-white transition-colors"
             aria-label="Open menu"
             >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

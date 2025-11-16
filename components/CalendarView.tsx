@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import type { Video } from '../types';
 
@@ -72,16 +71,23 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ videos }) => {
         >
           <span className={`text-sm sm:text-base font-semibold ${isToday ? 'text-brand-accent' : 'text-brand-text-secondary'}`}>{day}</span>
           <div className="flex-1 mt-1 space-y-1 overflow-y-auto">
-            {todaysVideos.map(video => (
+            {todaysVideos.map(video => {
+               let typeClasses = 'bg-brand-surface-light text-brand-text-secondary';
+                if (video.type === 'live') {
+                    typeClasses = 'border border-brand-text text-brand-text';
+                } else if (video.type === 'short') {
+                    typeClasses = 'bg-brand-surface-light/50 text-brand-text-secondary';
+                }
+              return (
               <div 
                 key={video.id} 
-                className={`p-1 sm:p-1.5 rounded-md text-[10px] sm:text-xs truncate cursor-pointer transition-all ${video.type === 'live' ? 'bg-red-900/50 text-red-300 hover:bg-red-900/80' : 'bg-blue-900/50 text-blue-300 hover:bg-blue-900/80'}`} 
+                className={`p-1 sm:p-1.5 rounded text-[10px] sm:text-xs truncate cursor-pointer transition-all ${typeClasses}`} 
                 title={video.title}
               >
-                <span className={`hidden sm:inline-block w-2 h-2 rounded-full mr-1.5 ${video.type === 'live' ? 'bg-red-400' : 'bg-blue-400'}`}></span>
+                <span className="hidden sm:inline-block capitalize">{video.type}: </span>
                 {video.title}
               </div>
-            ))}
+            )})}
           </div>
         </div>
       );
@@ -90,7 +96,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ videos }) => {
   };
 
   return (
-    <div className="bg-brand-surface rounded-xl shadow-lg p-4 sm:p-6 border border-brand-surface-light animate-entry">
+    <div className="bg-brand-surface rounded-lg p-4 sm:p-6 border border-brand-surface-light animate-entry">
       <div className="flex justify-between items-center mb-4">
         <button onClick={() => changeMonth(-1)} className="p-2 rounded-full hover:bg-brand-surface-light transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>

@@ -26,8 +26,8 @@ const FilterButton: React.FC<{
     onClick={onClick}
     className={`px-3 sm:px-4 py-2 text-sm font-semibold rounded-md transition-colors duration-200 ${
       isActive
-        ? 'bg-brand-accent text-white'
-        : 'bg-brand-surface-light text-brand-text-secondary hover:bg-brand-accent/50 hover:text-white'
+        ? 'bg-brand-accent text-gray-900'
+        : 'bg-brand-surface-light text-brand-text-secondary hover:bg-brand-surface-light/80 hover:text-brand-text'
     }`}
   >
     {label}
@@ -49,7 +49,7 @@ const VideoConfirmationModal = ({ video, onClose, onConfirm }: { video: Video | 
       role="dialog"
     >
       <div 
-        className="bg-brand-surface border border-brand-surface-light rounded-xl shadow-2xl p-6 w-full max-w-md relative text-center"
+        className="bg-brand-surface border border-brand-surface-light rounded-lg p-6 w-full max-w-md relative text-center"
         onClick={(e) => e.stopPropagation()}
       >
         <button 
@@ -61,7 +61,7 @@ const VideoConfirmationModal = ({ video, onClose, onConfirm }: { video: Video | 
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
-        <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-brand-accent/20">
+        <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-brand-surface-light">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-brand-accent" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M10 16.5l6-4.5-6-4.5v9zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" />
             </svg>
@@ -72,14 +72,14 @@ const VideoConfirmationModal = ({ video, onClose, onConfirm }: { video: Video | 
         <div className="mt-6 flex flex-col-reverse sm:flex-row-reverse gap-3">
           <button
             onClick={onConfirm}
-            className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-brand-accent text-base font-medium text-white hover:bg-brand-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-accent sm:w-auto sm:text-sm"
+            className="w-full inline-flex justify-center rounded-md border border-transparent px-4 py-2 bg-brand-accent text-base font-medium text-gray-900 hover:bg-brand-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-accent sm:w-auto sm:text-sm"
           >
             Yes, watch now
           </button>
           <button
             onClick={onClose}
             type="button"
-            className="w-full inline-flex justify-center rounded-md border border-brand-surface-light shadow-sm px-4 py-2 bg-brand-surface-light text-base font-medium text-brand-text hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:w-auto sm:text-sm"
+            className="w-full inline-flex justify-center rounded-md border border-brand-surface-light px-4 py-2 bg-brand-surface-light text-base font-medium text-brand-text hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:w-auto sm:text-sm"
           >
             No, cancel
           </button>
@@ -134,7 +134,7 @@ export const FeaturedView: React.FC<FeaturedViewProps> = ({ videos }) => {
             <p className="text-brand-text-secondary">Explore top performing videos and browse all content.</p>
         </div>
 
-        <div className="bg-brand-surface border border-brand-surface-light rounded-xl shadow-lg p-4 sm:p-6 animate-entry" style={{ animationDelay: '100ms' }}>
+        <div className="bg-brand-surface border border-brand-surface-light rounded-lg p-4 sm:p-6 animate-entry" style={{ animationDelay: '100ms' }}>
             <h3 className="text-lg font-bold mb-4">Top 10 Videos by Views</h3>
             <div className="h-96 w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -143,27 +143,27 @@ export const FeaturedView: React.FC<FeaturedViewProps> = ({ videos }) => {
                         layout="vertical"
                         margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
                     >
-                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                        <XAxis type="number" stroke="#9CA3AF" tickFormatter={(tick) => formatNumber(tick)} />
-                        <YAxis type="category" dataKey="name" stroke="#9CA3AF" width={100} tick={{ fontSize: 10 }} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#2C2C2C" />
+                        <XAxis type="number" stroke="#888888" tickFormatter={(tick) => formatNumber(tick)} />
+                        <YAxis type="category" dataKey="name" stroke="#888888" width={100} tick={{ fontSize: 10 }} />
                         <Tooltip
-                            cursor={{ fill: '#374151' }}
+                            cursor={{ fill: '#2C2C2C' }}
                             contentStyle={{
-                                backgroundColor: '#1F2937',
-                                border: '1px solid #374151',
+                                backgroundColor: '#1A1A1A',
+                                border: '1px solid #2C2C2C',
                                 borderRadius: '0.5rem',
                             }}
                             labelFormatter={(label, payload) => payload?.[0]?.payload?.fullTitle || label}
                         />
                         <Legend wrapperStyle={{ fontSize: '12px' }}/>
-                        <Bar dataKey="Views" fill="#10B981" />
-                        <Bar dataKey="Likes" fill="#3b82f6" />
+                        <Bar dataKey="Views" fill="#EAEAEA" />
+                        <Bar dataKey="Likes" fill="#888888" />
                     </BarChart>
                 </ResponsiveContainer>
             </div>
         </div>
 
-        <div className="bg-brand-surface border border-brand-surface-light rounded-xl shadow-lg p-4 sm:p-6 animate-entry" style={{ animationDelay: '200ms' }}>
+        <div className="bg-brand-surface border border-brand-surface-light rounded-lg p-4 sm:p-6 animate-entry" style={{ animationDelay: '200ms' }}>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
                  <h3 className="text-lg font-bold">Content List</h3>
                  <div className="flex items-center gap-2 flex-wrap">
@@ -190,7 +190,7 @@ export const FeaturedView: React.FC<FeaturedViewProps> = ({ videos }) => {
                         {paginatedVideos.map((video, index) => (
                             <tr 
                                 key={video.id} 
-                                className="border-b border-brand-surface-light last:border-b-0 hover:bg-brand-surface-light/50 hover:scale-[1.02] transition-transform duration-200 animate-entry cursor-pointer"
+                                className="border-b border-brand-surface-light last:border-b-0 hover:bg-brand-surface-light/50 transition-colors duration-200 animate-entry cursor-pointer"
                                 style={{ animationDelay: `${index * 50}ms` }}
                                 onClick={() => setSelectedVideo(video)}
                             >
@@ -212,7 +212,7 @@ export const FeaturedView: React.FC<FeaturedViewProps> = ({ videos }) => {
                 <button
                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
-                    className="px-4 py-2 bg-brand-surface-light rounded-md text-sm font-semibold hover:bg-brand-accent hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-brand-surface-light rounded-md text-sm font-semibold hover:bg-brand-surface-light/80 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     Prev
                 </button>
@@ -222,7 +222,7 @@ export const FeaturedView: React.FC<FeaturedViewProps> = ({ videos }) => {
                 <button
                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
-                     className="px-4 py-2 bg-brand-surface-light rounded-md text-sm font-semibold hover:bg-brand-accent hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                     className="px-4 py-2 bg-brand-surface-light rounded-md text-sm font-semibold hover:bg-brand-surface-light/80 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     Next
                 </button>

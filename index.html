@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M12 2L4 6v12l8 4 8-4V6L12 2Z' stroke='%2310B981' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='m10 9 5 3-5 3V9Z' fill='%2310B981'/%3E%3C/svg%3E" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M12 2L4 6v12l8 4 8-4V6L12 2Z' stroke='%23FFFFFF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='m10 9 5 3-5 3V9Z' fill='%23FFFFFF'/%3E%3C/svg%3E" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Youtube Sangam</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -17,13 +17,13 @@
               sans: ['Inter', 'sans-serif'],
             },
             colors: {
-              'brand-bg': '#111827',
-              'brand-surface': '#1F2937',
-              'brand-surface-light': '#374151',
-              'brand-text': '#F9FAFB',
-              'brand-text-secondary': '#9CA3AF',
-              'brand-accent': '#10B981',
-              'brand-accent-hover': '#059669',
+              'brand-bg': '#121212',
+              'brand-surface': '#1A1A1A',
+              'brand-surface-light': '#2C2C2C',
+              'brand-text': '#EAEAEA',
+              'brand-text-secondary': '#888888',
+              'brand-accent': '#FFFFFF',
+              'brand-accent-hover': '#DDDDDD',
             }
           }
         }
@@ -31,27 +31,22 @@
     </script>
     <style>
       body {
-        background-color: #111827;
-        /* Subtle grid pattern */
-        background-image: 
-          linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-          linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-        background-size: 2rem 2rem;
+        background-color: #121212;
       }
-      /* Custom scrollbar for a more modern look */
+      /* Custom scrollbar for a professional dark theme */
       ::-webkit-scrollbar {
         width: 8px;
         height: 8px;
       }
       ::-webkit-scrollbar-track {
-        background: #1F2937;
+        background: #1A1A1A;
       }
       ::-webkit-scrollbar-thumb {
-        background: #4B5563;
+        background: #444444;
         border-radius: 4px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #10B981;
+        background: #666666;
       }
       @keyframes fadeInUp {
         from {
@@ -68,6 +63,10 @@
         animation: fadeInUp 0.6s ease-out forwards;
       }
     </style>
+    <!-- Firebase SDKs -->
+    <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script type="importmap">
 {
   "imports": {

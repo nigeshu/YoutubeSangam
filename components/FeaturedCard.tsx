@@ -20,7 +20,7 @@ const LikesIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w
 export const FeaturedCard: React.FC<FeaturedCardProps> = ({ video, title, metric }) => {
     if (!video) {
         return (
-            <div className="bg-brand-surface border border-brand-surface-light rounded-xl shadow-lg p-4 flex flex-col items-center justify-center text-center h-full min-h-[240px]">
+            <div className="bg-brand-surface border border-brand-surface-light rounded-lg p-4 flex flex-col items-center justify-center text-center h-full min-h-[240px]">
                 <h4 className="font-bold text-lg text-brand-text mb-2">{title}</h4>
                 <p className="text-sm text-brand-text-secondary">No matching content found.</p>
             </div>
@@ -32,11 +32,11 @@ export const FeaturedCard: React.FC<FeaturedCardProps> = ({ video, title, metric
     const MetricIcon = metric === 'views' ? ViewsIcon : LikesIcon;
 
     return (
-        <div className="bg-brand-surface border border-brand-surface-light rounded-xl shadow-lg overflow-hidden group transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl hover:border-brand-accent/50">
+        <div className="bg-brand-surface border border-brand-surface-light rounded-lg overflow-hidden group transition-all duration-300 transform hover:-translate-y-1 hover:border-brand-text/80">
             <div className="relative">
                 <img src={video.thumbnailUrl} alt={video.title} className="w-full h-40 object-cover transition-transform duration-300 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
-                <div className="absolute top-2 right-2 bg-brand-accent text-white text-xs font-bold px-2 py-1 rounded-full shadow-md">
+                <div className="absolute top-2 right-2 bg-brand-accent text-gray-900 text-xs font-bold px-2 py-1 rounded-full">
                     {video.type === 'live' ? 'Live Stream' : (video.type === 'short' ? 'Short' : 'Video')}
                 </div>
                 <div className="absolute bottom-2 left-4 right-4">
@@ -44,7 +44,7 @@ export const FeaturedCard: React.FC<FeaturedCardProps> = ({ video, title, metric
                 </div>
             </div>
             <div className="p-4">
-                <p className="text-sm font-semibold text-brand-accent mb-2">{title}</p>
+                <p className="text-sm font-semibold text-brand-text-secondary mb-2">{title}</p>
                 <div className="flex items-center text-brand-text">
                     <MetricIcon />
                     <span className="font-mono font-bold text-xl">{formatNumber(metricValue)}</span>
