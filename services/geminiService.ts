@@ -1,4 +1,4 @@
-import type { Video, ChannelInfo } from '../types';
+import type { Video, ChannelInfo, Playlist } from '../types';
 
 // Use the latest key provided by the user for the YouTube Data API.
 const YOUTUBE_API_KEY = 'AIzaSyBDDFaeFh61IEN4C3eSx7fVFroA7kyIlnc';
@@ -7,6 +7,7 @@ const API_BASE_URL = 'https://www.googleapis.com/youtube/v3';
 interface FetchResult {
     videos: Video[];
     channelInfo: ChannelInfo;
+    playlists: Playlist[];
 }
 
 /**
@@ -104,8 +105,9 @@ export const fetchChannelData = async (channelUrl: string): Promise<FetchResult>
     }
 
     try {
-        const { name, uploadsPlaylistId, subscribers } = await getChannelDetails(identifier);
+        const { id: channelId, name, uploadsPlaylistId, subscribers } = await getChannelDetails(identifier);
 
+        // --- Fetch Videos ---
         let allVideoIds: string[] = [];
         let nextPageToken: string | undefined = undefined;
         const MAX_VIDEOS_TO_FETCH = 200;
@@ -132,8 +134,124 @@ export const fetchChannelData = async (channelUrl: string): Promise<FetchResult>
 
         } while (nextPageToken && allVideoIds.length < MAX_VIDEOS_TO_FETCH);
 
-        if (allVideoIds.length === 0) return { videos: [], channelInfo: { name, subscribers } };
+        let finalVideos: Video[] = [];
+        if (allVideoIds.length > 0) {
+            const allVideoItems: any[] = [];
+            const BATCH_SIZE = 50;
 
+            for (let i = 0; i < allVideoIds.length; i += BATCH_SIZE) {
+                const videoIdsBatch = allVideoIds.slice(i, i + BATCH_SIZE);
+                const videoIdsString = videoIdsBatch.join(',');
+                
+                const videoDetailsUrl = `${API_BASE_URL}/videos?part=snippet,statistics,contentDetails,liveStreamingDetails&id=${videoIdsString}&key=${YOUTUBE_API_KEY}`;
+                const videosResponse = await fetch(videoDetailsUrl);
+                const videosData = await videosResponse.json();
+                if (!videosResponse.ok) throw new Error(videosData.error?.message || 'Could not fetch video details.');
+                
+                allVideoItems.push(...videosData.items);
+            }
+
+            finalVideos = allVideoItems.map((item: any): Video => {
+                const views = item.statistics?.viewCount ? parseInt(item.statistics.viewCount, 10) : 0;
+                const likes = item.statistics?.likeCount ? parseInt(item.statistics.likeCount, 10) : 0;
+                const duration = item.contentDetails?.duration ? parseISO8601Duration(item.contentDetails.duration) : 0;
+
+                let videoType: 'video' | 'live' | 'short' = 'video';
+                const actualStartTime = item.liveStreamingDetails?.actualStartTime;
+                
+                if (item.liveStreamingDetails) {
+                    videoType = 'live';
+                } 
+                else if (duration > 0 && duration <= 60) {
+                    videoType = 'short';
+                }
+
+                return {
+                    id: item.id,
+                    title: item.snippet.title,
+                    type: videoType,
+                    publishedAt: item.snippet.publishedAt,
+                    actualStartTime: actualStartTime,
+                    thumbnailUrl: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.default.url,
+                    views,
+                    likes,
+                };
+            });
+        }
+        
+        // --- Fetch Playlists ---
+        const playlistsUrl = new URL(`${API_BASE_URL}/playlists`);
+        playlistsUrl.searchParams.append('part', 'snippet,contentDetails');
+        playlistsUrl.searchParams.append('channelId', channelId);
+        playlistsUrl.searchParams.append('maxResults', '50');
+        playlistsUrl.searchParams.append('key', YOUTUBE_API_KEY);
+        
+        const playlistsResponse = await fetch(playlistsUrl.toString());
+        const playlistsData = await playlistsResponse.json();
+        if (!playlistsResponse.ok) throw new Error(playlistsData.error?.message || 'Could not fetch playlists.');
+
+        const playlists: Playlist[] = playlistsData.items?.map((item: any): Playlist => ({
+            id: item.id,
+            title: item.snippet.title,
+            description: item.snippet.description,
+            thumbnailUrl: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.default.url,
+            videoCount: item.contentDetails.itemCount,
+            publishedAt: item.snippet.publishedAt,
+        })) || [];
+        
+        const sortedVideos = finalVideos.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+        
+        return {
+            videos: sortedVideos,
+            channelInfo: { name, subscribers },
+            playlists: playlists.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+        };
+
+    } catch (error) {
+        console.error("YouTube API Error:", error);
+        throw new Error(`Failed to fetch data from YouTube. ${error instanceof Error ? error.message : 'Please check the console for details.'}`);
+    }
+};
+
+
+/**
+ * Fetches all videos within a specific playlist.
+ * @param playlistId The ID of the YouTube playlist.
+ * @returns A promise that resolves to an array of Video objects.
+ */
+export const fetchPlaylistVideos = async (playlistId: string): Promise<Video[]> => {
+    try {
+        let allVideoIds: string[] = [];
+        let nextPageToken: string | undefined = undefined;
+
+        // 1. Get all video IDs from the playlist
+        do {
+            const playlistItemsUrl = new URL(`${API_BASE_URL}/playlistItems`);
+            playlistItemsUrl.searchParams.append('part', 'contentDetails');
+            playlistItemsUrl.searchParams.append('playlistId', playlistId);
+            playlistItemsUrl.searchParams.append('maxResults', '50');
+            playlistItemsUrl.searchParams.append('key', YOUTUBE_API_KEY);
+            if (nextPageToken) {
+                playlistItemsUrl.searchParams.append('pageToken', nextPageToken);
+            }
+
+            const playlistResponse = await fetch(playlistItemsUrl.toString());
+            const playlistData = await playlistResponse.json();
+            if (!playlistResponse.ok) throw new Error(playlistData.error?.message || 'Could not fetch playlist items.');
+            if (!playlistData.items) break;
+
+            const newVideoIds = playlistData.items
+                .map((item: any) => item.contentDetails.videoId)
+                .filter(Boolean); // Filter out any null/undefined IDs
+            allVideoIds = [...allVideoIds, ...newVideoIds];
+            
+            nextPageToken = playlistData.nextPageToken;
+
+        } while (nextPageToken);
+
+        if (allVideoIds.length === 0) return [];
+
+        // 2. Fetch details for all video IDs in batches
         const allVideoItems: any[] = [];
         const BATCH_SIZE = 50;
 
@@ -149,6 +267,7 @@ export const fetchChannelData = async (channelUrl: string): Promise<FetchResult>
             allVideoItems.push(...videosData.items);
         }
 
+        // 3. Map the data to our Video type
         const finalVideos = allVideoItems.map((item: any): Video => {
             const views = item.statistics?.viewCount ? parseInt(item.statistics.viewCount, 10) : 0;
             const likes = item.statistics?.likeCount ? parseInt(item.statistics.likeCount, 10) : 0;
@@ -157,12 +276,9 @@ export const fetchChannelData = async (channelUrl: string): Promise<FetchResult>
             let videoType: 'video' | 'live' | 'short' = 'video';
             const actualStartTime = item.liveStreamingDetails?.actualStartTime;
             
-            // A video is "live" if it was/is a live stream.
             if (item.liveStreamingDetails) {
                 videoType = 'live';
             } 
-            // A video is a "short" if its duration is 60 seconds or less. This is a strong heuristic.
-            // This excludes live streams that happen to be short.
             else if (duration > 0 && duration <= 60) {
                 videoType = 'short';
             }
@@ -179,15 +295,10 @@ export const fetchChannelData = async (channelUrl: string): Promise<FetchResult>
             };
         });
 
-        const sortedVideos = finalVideos.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
-        
-        return {
-            videos: sortedVideos,
-            channelInfo: { name, subscribers }
-        };
+        return finalVideos.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
     } catch (error) {
-        console.error("YouTube API Error:", error);
-        throw new Error(`Failed to fetch data from YouTube. ${error instanceof Error ? error.message : 'Please check the console for details.'}`);
+        console.error("YouTube API Error fetching playlist videos:", error);
+        throw new Error(`Failed to fetch playlist videos. ${error instanceof Error ? error.message : 'Please check the console for details.'}`);
     }
 };

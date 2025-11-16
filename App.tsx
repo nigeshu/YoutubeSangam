@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { Video, ChannelInfo } from './types';
+import type { Video, ChannelInfo, Playlist } from './types';
 import { fetchChannelData } from './services/geminiService';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
@@ -7,12 +7,13 @@ import { WelcomeScreen } from './components/WelcomeScreen';
 import { CalendarView } from './components/CalendarView';
 import { AnalyticsView } from './components/AnalyticsView';
 import { FeaturedView } from './components/FeaturedView';
+import { PlaylistView } from './components/PlaylistView';
 import { MobileMenu } from './components/MobileMenu';
 import AuthScreen from './components/AuthScreen';
 import { auth, db } from './services/firebase';
 import { TrackView } from './components/TrackView';
 
-type View = 'featured' | 'calendar' | 'analytics' | 'track';
+type View = 'featured' | 'calendar' | 'analytics' | 'track' | 'playlist';
 
 function App() {
   const [user, setUser] = useState<any>(null);
@@ -22,6 +23,7 @@ function App() {
   const [hasAnalyzedOnLogin, setHasAnalyzedOnLogin] = useState(false);
 
   const [videos, setVideos] = useState<Video[]>([]);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [channelInfo, setChannelInfo] = useState<ChannelInfo | null>(null);
   const [channelUrl, setChannelUrl] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
@@ -74,6 +76,7 @@ function App() {
     await auth.signOut();
     // Reset app state on sign out
     setVideos([]);
+    setPlaylists([]);
     setChannelInfo(null);
     setChannelUrl('');
     setError(null);
@@ -89,9 +92,10 @@ function App() {
     setChannelUrl(url);
 
     try {
-      const { videos, channelInfo } = await fetchChannelData(url);
+      const { videos, channelInfo, playlists } = await fetchChannelData(url);
       setVideos(videos);
       setChannelInfo(channelInfo);
+      setPlaylists(playlists);
       setSelectedView('featured'); // Reset to featured view on new analysis
     } catch (err) {
       if (err instanceof Error) {
@@ -100,6 +104,7 @@ function App() {
         setError('An unknown error occurred.');
       }
       setVideos([]);
+      setPlaylists([]);
       setChannelInfo(null);
     } finally {
       setIsLoading(false);
@@ -166,6 +171,8 @@ function App() {
         return <CalendarView videos={videos} />;
       case 'analytics':
         return <AnalyticsView videos={videos} />;
+      case 'playlist':
+        return <PlaylistView playlists={playlists} />;
       // 'track' is handled above for logged-in users
       default:
         return <WelcomeScreen user={user} onTrackClick={handleWelcomeScreenTrackClick} />;

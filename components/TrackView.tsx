@@ -197,25 +197,66 @@ const GameSearch: React.FC<{
     );
 };
 
+const StarRating: React.FC<{ rating: number; onRate: (rating: number) => void }> = ({ rating, onRate }) => {
+    const [hoverRating, setHoverRating] = useState(0);
+
+    return (
+        <div className="flex items-center flex-shrink-0">
+            {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                    key={star}
+                    onClick={() => onRate(star === rating ? 0 : star)}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    className="focus:outline-none p-0.5"
+                    aria-label={`Rate ${star} stars`}
+                >
+                    <svg
+                        className={`w-5 h-5 transition-colors ${
+                            (hoverRating || rating) >= star ? 'text-yellow-400' : 'text-brand-text-secondary'
+                        }`}
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                    >
+                        <path
+                            d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118L2.05 10.1c-.783-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                        />
+                    </svg>
+                </button>
+            ))}
+        </div>
+    );
+};
+
+
 const GameLibrary: React.FC<{
     library: LibraryGame[];
     isLoadingLibrary: boolean;
     deletingGameId: string | null;
     handleRemoveGame: (id: string) => void;
     handleStatusChange: (id: string, status: LibraryGame['status']) => void;
+    handleRatingChange: (id: string, rating: number) => void;
     error: string | null;
-}> = ({ library, isLoadingLibrary, deletingGameId, handleRemoveGame, handleStatusChange, error }) => {
-    const gameStatuses: LibraryGame['status'][] = ['Planned', 'Playing', 'Completed', 'Pause', 'Gave Up'];
+}> = ({ library, isLoadingLibrary, deletingGameId, handleRemoveGame, handleStatusChange, handleRatingChange, error }) => {
+    const gameStatuses: LibraryGame['status'][] = ['Playing', 'Planned', 'Completed', 'Pause', 'Gave Up'];
 
     const gamesByStatus = useMemo(() => {
+        const customOrder: LibraryGame['status'][] = ['Playing', 'Planned', 'Completed', 'Pause', 'Gave Up'];
         const grouped: { [key in LibraryGame['status']]?: LibraryGame[] } = {};
-        for (const status of gameStatuses) {
-            const gamesInStatus = library.filter(game => game.status === status);
-            if (gamesInStatus.length > 0) {
-                grouped[status] = gamesInStatus;
+        library.forEach(game => {
+            if (!grouped[game.status]) {
+                grouped[game.status] = [];
             }
-        }
-        return grouped;
+            grouped[game.status]!.push(game);
+        });
+
+        const orderedEntries = Object.entries(grouped).sort(([statusA], [statusB]) => {
+            return customOrder.indexOf(statusA as LibraryGame['status']) - customOrder.indexOf(statusB as LibraryGame['status']);
+        });
+
+        return orderedEntries;
+
     }, [library]);
 
     return (
@@ -223,24 +264,30 @@ const GameLibrary: React.FC<{
             {error && <p className="text-red-400 text-center py-2 bg-red-900/50 border border-red-700 rounded-lg">{error}</p>}
              {isLoadingLibrary ? (
                 <p className="text-center text-brand-text-secondary">Loading your library...</p>
-             ) : Object.keys(gamesByStatus).length === 0 ? (
+             ) : gamesByStatus.length === 0 ? (
                 <div className="bg-brand-surface border border-brand-surface-light rounded-lg p-8 text-center">
                     <p className="text-brand-text-secondary">Your game library is empty. Go to the "Game Search" tab to add games!</p>
                 </div>
              ) : (
-                Object.entries(gamesByStatus).map(([status, games]) => (
+                gamesByStatus.map(([status, games]) => (
                     <div key={status} className="bg-brand-surface border border-brand-surface-light rounded-lg p-4 sm:p-6 animate-entry">
                         <h3 className="text-lg font-bold mb-4">{status} ({games.length})</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {games.map(game => (
                                 <div key={game.id} className="flex items-start gap-4 bg-brand-bg p-3 rounded-lg border border-brand-surface-light">
                                     <img src={game.backgroundImage} alt={game.name} className="w-20 h-20 object-cover rounded-md flex-shrink-0" />
-                                    <div className="flex-1">
-                                        <p className="font-semibold text-brand-text">{game.name}</p>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between items-start mb-1">
+                                            <p className="font-semibold text-brand-text pr-2 flex-1 truncate" title={game.name}>{game.name}</p>
+                                            <StarRating 
+                                                rating={game.rating || 0}
+                                                onRate={(newRating) => handleRatingChange(game.id, newRating)}
+                                            />
+                                        </div>
                                         <select 
                                             value={game.status} 
                                             onChange={(e) => handleStatusChange(game.id, e.target.value as LibraryGame['status'])}
-                                            className="mt-2 w-full bg-brand-surface-light border border-brand-surface-light rounded-md py-1 px-2 text-sm text-brand-text focus:outline-none focus:ring-1 focus:ring-brand-accent"
+                                            className="mt-1 w-full bg-brand-surface-light border border-brand-surface-light rounded-md py-1 px-2 text-sm text-brand-text focus:outline-none focus:ring-1 focus:ring-brand-accent"
                                         >
                                             {gameStatuses.map(s => <option key={s} value={s}>{s}</option>)}
                                         </select>
@@ -338,6 +385,7 @@ export const TrackView: React.FC<TrackViewProps> = ({ user }) => {
                 backgroundImage: game.background_image,
                 released: game.released,
                 status: 'Planned',
+                rating: 0,
                 addedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
             });
         } catch(err: any) {
@@ -364,6 +412,15 @@ export const TrackView: React.FC<TrackViewProps> = ({ user }) => {
             await gamesCollection.doc(gameDocId).update({ status: newStatus });
         } catch (err: any) {
              setError(`Could not update game status. Error: ${err.message}`);
+        }
+    };
+
+    const handleRatingChange = async (gameDocId: string, newRating: number) => {
+        setError(null);
+        try {
+            await gamesCollection.doc(gameDocId).update({ rating: newRating });
+        } catch (err: any) {
+             setError(`Could not update game rating. Error: ${err.message}`);
         }
     };
 
@@ -446,6 +503,7 @@ export const TrackView: React.FC<TrackViewProps> = ({ user }) => {
                     deletingGameId={deletingGameId}
                     handleRemoveGame={handleRemoveGame}
                     handleStatusChange={handleStatusChange}
+                    handleRatingChange={handleRatingChange}
                     error={error}
                 />
               )}

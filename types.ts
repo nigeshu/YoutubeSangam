@@ -14,6 +14,15 @@ export interface ChannelInfo {
   subscribers: number;
 }
 
+export interface Playlist {
+  id: string;
+  title: string;
+  description: string;
+  thumbnailUrl: string;
+  videoCount: number;
+  publishedAt: string; // ISO 8601 string
+}
+
 export interface Goal {
     id: string;
     userId: string;
@@ -40,4 +49,5 @@ export interface LibraryGame {
   released: string;
   status: 'Planned' | 'Playing' | 'Completed' | 'Pause' | 'Gave Up';
   addedAt: any; // Firebase Timestamp
+  rating?: number; // User rating from 0 to 5
 }
