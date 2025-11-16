@@ -6,6 +6,7 @@ const AuthScreen: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [channelUrl, setChannelUrl] = useState('');
+    const [rememberMe, setRememberMe] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
@@ -19,6 +20,10 @@ const AuthScreen: React.FC = () => {
         setError(null);
         try {
             if (isLogin) {
+                const persistence = rememberMe
+                    ? window.firebase.auth.Auth.Persistence.LOCAL
+                    : window.firebase.auth.Auth.Persistence.SESSION;
+                await auth.setPersistence(persistence);
                 await auth.signInWithEmailAndPassword(email, password);
             } else {
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
@@ -91,6 +96,23 @@ const AuthScreen: React.FC = () => {
                                 className="mt-1 block w-full px-3 py-2 bg-brand-bg border border-brand-surface-light rounded-md text-brand-text placeholder-brand-text-secondary focus:outline-none focus:ring-brand-accent focus:border-brand-accent"
                                 placeholder="https://youtube.com/@handle"
                             />
+                        </div>
+                    )}
+                     {isLogin && (
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                                <input
+                                    id="remember-me"
+                                    name="remember-me"
+                                    type="checkbox"
+                                    checked={rememberMe}
+                                    onChange={(e) => setRememberMe(e.target.checked)}
+                                    className="h-4 w-4 text-brand-accent bg-brand-bg border-brand-surface-light rounded focus:ring-brand-accent"
+                                />
+                                <label htmlFor="remember-me" className="ml-2 block text-sm text-brand-text-secondary">
+                                    Remember me
+                                </label>
+                            </div>
                         </div>
                     )}
                     {error && <p className="text-sm text-red-400">{error}</p>}
