@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import type { Playlist, Video } from '../types';
 import { fetchPlaylistVideos } from '../services/geminiService';
@@ -59,10 +60,21 @@ const VideoConfirmationModal = ({ video, onClose, onConfirm }: { video: Video | 
 
 
 const PlaylistCard: React.FC<{ playlist: Playlist; index: number; onSelect: () => void; }> = ({ playlist, index, onSelect }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      const url = `https://www.youtube.com/playlist?list=${playlist.id}`;
+      navigator.clipboard.writeText(url).then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+      });
+  };
+
   return (
     <div 
       onClick={onSelect}
-      className="cursor-pointer bg-brand-surface border border-brand-surface-light rounded-lg overflow-hidden group transition-all duration-300 transform hover:-translate-y-1 hover:border-brand-text/80 animate-entry"
+      className="cursor-pointer bg-brand-surface border border-brand-surface-light rounded-lg overflow-hidden group transition-all duration-300 transform hover:-translate-y-1 hover:border-brand-text/80 animate-entry relative"
       style={{ animationDelay: `${index * 50}ms` }}
     >
       <div className="relative">
@@ -76,10 +88,21 @@ const PlaylistCard: React.FC<{ playlist: Playlist; index: number; onSelect: () =
           <span>{playlist.videoCount} Videos</span>
         </div>
       </div>
-      <div className="p-4">
-        <p className="text-sm text-brand-text-secondary line-clamp-2" title={playlist.description}>
+      <div className="p-4 flex justify-between items-start gap-2">
+        <p className="text-sm text-brand-text-secondary line-clamp-2 flex-1" title={playlist.description}>
           {playlist.description || 'No description available.'}
         </p>
+        <button
+            onClick={handleShare}
+            className="p-1.5 text-brand-text-secondary hover:text-brand-accent hover:bg-brand-surface-light rounded-md transition-colors relative"
+            title="Copy Link"
+        >
+            {copied ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+            ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+            )}
+        </button>
       </div>
     </div>
   );
@@ -193,6 +216,7 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlists }) => {
     const [playlistVideos, setPlaylistVideos] = useState<Video[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
 
     const handleSelectPlaylist = async (playlist: Playlist) => {
         if (playlist.videoCount === 0) return; // Don't fetch empty playlists
@@ -215,6 +239,10 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlists }) => {
         setPlaylistVideos([]);
         setError(null);
     };
+
+    const filteredPlaylists = useMemo(() => {
+        return playlists.filter(p => p.title.toLowerCase().includes(searchQuery.toLowerCase()));
+    }, [playlists, searchQuery]);
 
     if (selectedPlaylist) {
         return (
@@ -248,19 +276,38 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlists }) => {
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-entry">
-      <div>
-        <h2 className="text-2xl sm:text-3xl font-bold text-brand-text mb-1">Channel Playlists</h2>
-        <p className="text-brand-text-secondary">Browse through the public playlists available on the channel.</p>
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-brand-text mb-1">Channel Playlists</h2>
+            <p className="text-brand-text-secondary">Browse through the public playlists available on the channel.</p>
+        </div>
+        <div className="w-full sm:w-64">
+             <div className="relative">
+                <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search playlists..."
+                    className="w-full bg-brand-bg border border-brand-surface-light rounded-md py-2 pl-10 pr-4 text-sm text-brand-text placeholder-brand-text-secondary focus:outline-none focus:ring-2 focus:ring-brand-accent"
+                />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-brand-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
       </div>
-      {playlists.length > 0 ? (
+
+      {filteredPlaylists.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-          {playlists.map((playlist, index) => (
+          {filteredPlaylists.map((playlist, index) => (
             <PlaylistCard key={playlist.id} playlist={playlist} index={index} onSelect={() => handleSelectPlaylist(playlist)} />
           ))}
         </div>
       ) : (
         <div className="bg-brand-surface border border-brand-surface-light rounded-lg p-8 text-center">
-            <p className="text-brand-text-secondary">This channel doesn't have any public playlists.</p>
+            <p className="text-brand-text-secondary">{playlists.length === 0 ? "This channel doesn't have any public playlists." : "No playlists match your search."}</p>
         </div>
       )}
     </div>

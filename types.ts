@@ -1,3 +1,4 @@
+
 export interface Video {
   id: string;
   title: string;
@@ -50,4 +51,17 @@ export interface LibraryGame {
   status: 'Planned' | 'Playing' | 'Completed' | 'Pause' | 'Gave Up';
   addedAt: any; // Firebase Timestamp
   rating?: number; // User rating from 0 to 5
+}
+
+export interface Comment {
+  id: string;
+  authorDisplayName: string;
+  authorProfileImageUrl: string;
+  textDisplay: string;
+  publishedAt: string;
+  likeCount: number;
+  videoId: string;
+  videoTitle?: string;
+  replies?: Comment[]; // For nested or local replies
+  isOwner?: boolean; // To distinguish user replies
 }

@@ -1,4 +1,5 @@
-import type { Video, ChannelInfo, Playlist } from '../types';
+
+import type { Video, ChannelInfo, Playlist, Comment } from '../types';
 
 // Use the latest key provided by the user for the YouTube Data API.
 const YOUTUBE_API_KEY = 'AIzaSyBDDFaeFh61IEN4C3eSx7fVFroA7kyIlnc';
@@ -300,5 +301,49 @@ export const fetchPlaylistVideos = async (playlistId: string): Promise<Video[]> 
     } catch (error) {
         console.error("YouTube API Error fetching playlist videos:", error);
         throw new Error(`Failed to fetch playlist videos. ${error instanceof Error ? error.message : 'Please check the console for details.'}`);
+    }
+};
+
+/**
+ * Fetches comments for a specific video.
+ * @param videoId The ID of the video.
+ * @returns A promise that resolves to an array of Comment objects.
+ */
+export const fetchVideoComments = async (videoId: string): Promise<Comment[]> => {
+    try {
+        const url = new URL(`${API_BASE_URL}/commentThreads`);
+        url.searchParams.append('part', 'snippet');
+        url.searchParams.append('videoId', videoId);
+        url.searchParams.append('maxResults', '10'); // Limit to top 10 comments per video for performance
+        url.searchParams.append('key', YOUTUBE_API_KEY);
+        url.searchParams.append('textFormat', 'plainText');
+
+        const response = await fetch(url.toString());
+        const data = await response.json();
+
+        if (!response.ok) {
+            // Comments might be disabled for a video, which returns a 403. We should just return empty.
+            if (response.status === 403) return [];
+            throw new Error(data.error?.message || 'Could not fetch comments.');
+        }
+
+        if (!data.items) return [];
+
+        return data.items.map((item: any): Comment => {
+            const snippet = item.snippet.topLevelComment.snippet;
+            return {
+                id: item.id,
+                authorDisplayName: snippet.authorDisplayName,
+                authorProfileImageUrl: snippet.authorProfileImageUrl,
+                textDisplay: snippet.textDisplay,
+                publishedAt: snippet.publishedAt,
+                likeCount: snippet.likeCount,
+                videoId: videoId,
+            };
+        });
+
+    } catch (error) {
+        console.error(`Error fetching comments for video ${videoId}:`, error);
+        return [];
     }
 };

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
 import type { Goal } from '../types';
@@ -14,6 +15,78 @@ const Feature: React.FC<{ icon: React.ReactElement, title: string, description: 
         </div>
     </div>
 );
+
+const PlayfulMascot = () => {
+  const [eyePos, setEyePos] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+       // Calculate eye position limited to a small range
+       const limit = 8;
+       const x = Math.min(Math.max((e.clientX - window.innerWidth / 2) / 30, -limit), limit);
+       const y = Math.min(Math.max((e.clientY - window.innerHeight / 2) / 30, -limit), limit);
+       setEyePos({ x, y });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  return (
+    <div className="relative flex justify-center items-center h-64 w-full pointer-events-none sm:pointer-events-auto">
+       {/* Add styles for animations locally */}
+       <style>{`
+         @keyframes float-mascot {
+           0%, 100% { transform: translateY(0px); }
+           50% { transform: translateY(-12px); }
+         }
+         .animate-float-mascot {
+           animation: float-mascot 3s ease-in-out infinite;
+         }
+         @keyframes blink-eyes {
+            0%, 48%, 52%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(0.1); }
+         }
+         .animate-blink {
+            animation: blink-eyes 4s infinite;
+         }
+       `}</style>
+
+       <div className="relative group animate-float-mascot cursor-pointer pointer-events-auto">
+           {/* Speech Bubble */}
+            <div className="absolute -top-12 -right-12 bg-brand-accent text-brand-bg font-bold text-sm px-4 py-2 rounded-xl rounded-bl-none opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 shadow-lg z-10 whitespace-nowrap">
+              Paste a link! ✨
+              <div className="absolute bottom-0 left-0 -mb-1.5 border-l-[10px] border-l-brand-accent border-b-[10px] border-b-transparent"></div>
+            </div>
+
+           {/* TV Body */}
+           <div className="w-40 h-32 bg-brand-surface border-4 border-brand-text-secondary rounded-3xl relative shadow-2xl flex items-center justify-center group-hover:border-brand-accent transition-colors duration-300">
+                {/* Antennae */}
+                <div className="absolute -top-6 left-8 h-8 w-1 bg-brand-text-secondary rounded-full transform -rotate-12 origin-bottom group-hover:bg-brand-accent transition-colors"></div>
+                <div className="absolute -top-6 right-8 h-8 w-1 bg-brand-text-secondary rounded-full transform rotate-12 origin-bottom group-hover:bg-brand-accent transition-colors"></div>
+                
+                {/* Screen */}
+                <div className="w-32 h-20 bg-[#111] rounded-xl border-2 border-[#222] flex items-center justify-center overflow-hidden relative">
+                     {/* Reflection */}
+                     <div className="absolute top-0 right-0 w-16 h-16 bg-white/5 rounded-full -mr-8 -mt-8 blur-md"></div>
+
+                     {/* Eyes */}
+                     <div 
+                        className="flex gap-5 transition-transform duration-75 ease-out"
+                        style={{ transform: `translate(${eyePos.x}px, ${eyePos.y}px)` }}
+                     >
+                        <div className="w-3 h-8 bg-brand-accent rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)] animate-blink"></div>
+                        <div className="w-3 h-8 bg-brand-accent rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)] animate-blink" style={{ animationDelay: '0.1s' }}></div>
+                     </div>
+                </div>
+
+                {/* Legs */}
+                 <div className="absolute -bottom-3 left-6 w-3 h-4 bg-brand-text-secondary rounded-b-lg group-hover:bg-brand-accent transition-colors"></div>
+                 <div className="absolute -bottom-3 right-6 w-3 h-4 bg-brand-text-secondary rounded-b-lg group-hover:bg-brand-accent transition-colors"></div>
+           </div>
+       </div>
+    </div>
+  );
+}
 
 const GoalTracker: React.FC<{ user: any; onTrackClick: () => void }> = ({ user, onTrackClick }) => {
     const [goals, setGoals] = useState<Goal[]>([]);
@@ -201,8 +274,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ user, onTrackClick
                             />
                         </div>
                     </div>
-                     <div className="lg:col-span-2">
-                        {/* The GoalTracker can be placed here or below for a different layout */}
+                     <div className="lg:col-span-2 flex justify-center items-center h-full min-h-[300px]">
+                        <PlayfulMascot />
                      </div>
                 </div>
 

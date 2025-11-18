@@ -1,12 +1,14 @@
+
 import React from 'react';
 
-type View = 'featured' | 'calendar' | 'analytics' | 'playlist' | 'track';
+type View = 'featured' | 'calendar' | 'analytics' | 'playlist' | 'track' | 'community';
 
 interface MobileMenuProps {
   isOpen: boolean;
   onClose: () => void;
   selectedView: View;
   onSelectView: (view: View) => void;
+  user: any;
 }
 
 interface MenuButtonProps {
@@ -14,23 +16,31 @@ interface MenuButtonProps {
   label: string;
   isActive: boolean;
   onClick: () => void;
+  isLocked?: boolean;
 }
 
-const MenuButton: React.FC<MenuButtonProps> = ({ icon, label, isActive, onClick }) => (
+const MenuButton: React.FC<MenuButtonProps> = ({ icon, label, isActive, onClick, isLocked }) => (
   <button
     onClick={onClick}
-    className={`w-full flex items-center gap-4 px-4 py-3 rounded-md transition-colors duration-200 text-left ${
+    className={`w-full flex items-center justify-between px-4 py-3 rounded-md transition-colors duration-200 text-left ${
       isActive
         ? 'bg-brand-accent text-gray-900 font-semibold'
         : 'text-brand-text-secondary hover:bg-brand-surface-light hover:text-brand-text'
-    }`}
+    } ${isLocked ? 'opacity-75' : ''}`}
   >
-    {icon}
-    <span className="text-lg">{label}</span>
+    <div className="flex items-center gap-4">
+        {icon}
+        <span className="text-lg">{label}</span>
+    </div>
+     {isLocked && (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-brand-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+    )}
   </button>
 );
 
-export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, selectedView, onSelectView }) => {
+export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, selectedView, onSelectView, user }) => {
   const views: { id: View, label: string, icon: React.ReactElement }[] = [
     {
       id: 'featured',
@@ -56,6 +66,11 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, selecte
       id: 'track',
       label: 'Track',
       icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.5 12a9.5 9.5 0 009.5 9.5 9.5 9.5 0 009.5-9.5A9.5 9.5 0 0012 2.5 9.5 9.5 0 002.5 12z" /></svg>
+    },
+    {
+      id: 'community',
+      label: 'Community',
+      icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" /></svg>
     }
   ];
 
@@ -81,15 +96,19 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, selecte
                 </button>
             </div>
              <nav className="flex flex-col gap-2">
-                {views.map(view => (
-                <MenuButton
-                    key={view.id}
-                    label={view.label}
-                    icon={view.icon}
-                    isActive={selectedView === view.id}
-                    onClick={() => onSelectView(view.id)}
-                />
-                ))}
+                {views.map(view => {
+                   const isLocked = (view.id === 'track' || view.id === 'community') && !user;
+                   return (
+                    <MenuButton
+                        key={view.id}
+                        label={view.label}
+                        icon={view.icon}
+                        isActive={selectedView === view.id}
+                        onClick={() => onSelectView(view.id)}
+                        isLocked={isLocked}
+                    />
+                   );
+                })}
             </nav>
         </div>
       </div>

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import type { ChannelInfo } from '../types';
 
@@ -12,7 +13,7 @@ interface HeaderProps {
 }
 
 const formatSubscribers = (num: number) => {
-    return new Intl.NumberFormat('en-US').format(num);
+    return num.toLocaleString('en-US');
 };
 
 const HelpModal = ({ onClose }: { onClose: () => void }) => (

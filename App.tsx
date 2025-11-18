@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import type { Video, ChannelInfo, Playlist } from './types';
 import { fetchChannelData } from './services/geminiService';
@@ -8,12 +9,14 @@ import { CalendarView } from './components/CalendarView';
 import { AnalyticsView } from './components/AnalyticsView';
 import { FeaturedView } from './components/FeaturedView';
 import { PlaylistView } from './components/PlaylistView';
+import { CommunityView } from './components/CommunityView';
 import { MobileMenu } from './components/MobileMenu';
+import { OnboardingTour } from './components/OnboardingTour';
 import AuthScreen from './components/AuthScreen';
 import { auth, db } from './services/firebase';
 import { TrackView } from './components/TrackView';
 
-type View = 'featured' | 'calendar' | 'analytics' | 'track' | 'playlist';
+type View = 'featured' | 'calendar' | 'analytics' | 'track' | 'playlist' | 'community';
 
 function App() {
   const [user, setUser] = useState<any>(null);
@@ -31,26 +34,39 @@ function App() {
   const [selectedView, setSelectedView] = useState<View>('featured');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  // Tour State
+  const [showTour, setShowTour] = useState(false);
+
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user: any) => {
       setUser(user);
-      if (user && !hasAnalyzedOnLogin) {
+      if (user) {
         try {
-          const userDoc = await db.collection('users').doc(user.uid).get();
+          const userDocRef = db.collection('users').doc(user.uid);
+          const userDoc = await userDocRef.get();
+          
           if (userDoc.exists) {
             const userData = userDoc.data();
-            if (userData && userData.channelUrl) {
+            
+            // Check for channel data
+            if (!hasAnalyzedOnLogin && userData && userData.channelUrl) {
               await handleAnalyze(userData.channelUrl);
               setHasAnalyzedOnLogin(true);
+            }
+
+            // Check for tutorial status
+            if (!userData?.tutorialCompleted) {
+                setShowTour(true);
             }
           }
         } catch (err) {
             console.error("Failed to fetch user profile:", err);
             setError("Could not load your saved channel. Please try analyzing manually.");
         }
-      } else if (!user) {
+      } else {
         // Reset state on logout
         setHasAnalyzedOnLogin(false);
+        setShowTour(false);
       }
       setAuthLoading(false);
     });
@@ -83,6 +99,7 @@ function App() {
     setSelectedView('featured');
     setShowAuthScreen(false); // Ensure auth screen is hidden
     setHasAnalyzedOnLogin(false);
+    setShowTour(false);
   };
 
   const handleAnalyze = async (url: string) => {
@@ -112,8 +129,8 @@ function App() {
   };
 
   const handleSelectView = (view: View) => {
-    if (view === 'track' && !user) {
-        setViewAfterAuth('track');
+    if ((view === 'track' || view === 'community') && !user) {
+        setViewAfterAuth(view);
         setShowAuthScreen(true);
     } else {
         setSelectedView(view);
@@ -126,6 +143,21 @@ function App() {
           setViewAfterAuth('track'); // Take user to the track view after login
           setShowAuthScreen(true);
       }
+  };
+
+  const handleTourComplete = async () => {
+      setShowTour(false);
+      if (user) {
+          try {
+              await db.collection('users').doc(user.uid).update({
+                  tutorialCompleted: true
+              });
+          } catch (e) {
+              console.error("Failed to update tutorial status", e);
+          }
+      }
+      // Reset to a default safe view after tour
+      setSelectedView('featured');
   };
 
   const renderContent = () => {
@@ -173,6 +205,8 @@ function App() {
         return <AnalyticsView videos={videos} />;
       case 'playlist':
         return <PlaylistView playlists={playlists} />;
+      case 'community':
+        return <CommunityView videos={videos} />;
       // 'track' is handled above for logged-in users
       default:
         return <WelcomeScreen user={user} onTrackClick={handleWelcomeScreenTrackClick} />;
@@ -191,7 +225,10 @@ function App() {
   }
 
   if (showAuthScreen) {
-    return <AuthScreen />;
+    return <AuthScreen onBack={() => {
+      setShowAuthScreen(false);
+      setViewAfterAuth(null);
+    }} />;
   }
 
 
@@ -212,6 +249,7 @@ function App() {
           onClose={() => setIsMenuOpen(false)}
           selectedView={selectedView}
           onSelectView={handleSelectView}
+          user={user}
         />
        )}
       <div className="flex-1 flex overflow-hidden">
@@ -219,12 +257,20 @@ function App() {
           <Sidebar 
             selectedView={selectedView} 
             onSelectView={handleSelectView} 
+            user={user}
           />
         )}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-brand-bg">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-brand-bg relative">
           {renderContent()}
         </main>
       </div>
+
+      {/* Onboarding Tour */}
+      <OnboardingTour 
+        isOpen={showTour} 
+        onComplete={handleTourComplete} 
+        onViewChange={(view) => setSelectedView(view)}
+      />
     </div>
   );
 }

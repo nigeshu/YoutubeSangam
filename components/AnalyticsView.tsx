@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState, useEffect } from 'react';
 import type { Video } from '../types';
 
@@ -35,6 +36,41 @@ const useCountUp = (end: number, duration = 1500) => {
     return count;
 };
 
+const LatestVideoCard: React.FC<{ video: Video }> = ({ video }) => {
+    return (
+        <div className="bg-brand-surface border border-brand-surface-light hover:border-brand-accent/50 rounded-lg overflow-hidden flex flex-col md:flex-row group transition-all duration-300 h-full shadow-lg hover:shadow-brand-accent/5">
+            <div className="relative w-full md:w-2/5 h-48 md:h-auto flex-shrink-0">
+                <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover" />
+                <div className="absolute top-2 left-2 bg-brand-accent text-gray-900 text-xs font-bold px-2 py-1 rounded-full uppercase tracking-wider shadow-md">
+                    {video.type === 'live' ? 'Live Stream' : 'Video'}
+                </div>
+            </div>
+            <div className="p-4 flex-1 flex flex-col justify-between">
+                <div>
+                    <h3 className="text-lg font-bold text-brand-text mb-2 line-clamp-2 group-hover:text-brand-accent transition-colors" title={video.title}>{video.title}</h3>
+                    <p className="text-brand-text-secondary text-sm mb-4">{new Date(video.type === 'live' && video.actualStartTime ? video.actualStartTime : video.publishedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 mt-auto pt-4 border-t border-brand-surface-light bg-brand-surface/50">
+                     <div className="flex flex-col">
+                        <span className="text-xs text-brand-text-secondary uppercase tracking-wider mb-1">Views</span>
+                        <div className="flex items-center gap-2 text-brand-text">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-brand-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                            <span className="font-bold text-lg">{formatNumber(video.views)}</span>
+                        </div>
+                     </div>
+                     <div className="flex flex-col">
+                        <span className="text-xs text-brand-text-secondary uppercase tracking-wider mb-1">Likes</span>
+                        <div className="flex items-center gap-2 text-brand-text">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-brand-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.672l1.318-1.354a4.5 4.5 0 116.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z" /></svg>
+                            <span className="font-bold text-lg">{formatNumber(video.likes)}</span>
+                         </div>
+                     </div>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 const StatCard = ({ title, value, icon }: { title: string, value: number, icon: React.ReactElement }) => {
     const animatedValue = useCountUp(value);
@@ -115,6 +151,12 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ videos }) => {
         };
     }, [videos]);
 
+    // Filter to get only the latest 2 items that are either videos or live streams (excluding shorts)
+    const latestContent = useMemo(() => {
+        return videos
+            .filter(v => v.type === 'video' || v.type === 'live')
+            .slice(0, 2);
+    }, [videos]);
 
     const contentBreakdownData = [
         { label: 'Videos', value: analytics.videoCount, color: '#EAEAEA' },
@@ -135,6 +177,23 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ videos }) => {
                 <h2 className="text-2xl sm:text-3xl font-bold text-brand-text mb-1">Channel Analytics</h2>
                 <p className="text-brand-text-secondary">Deep dive into the channel's performance metrics, based on the last 200 videos.</p>
             </div>
+
+             {/* Latest Content Section */}
+             {latestContent.length > 0 && (
+                <div className="animate-entry" style={{ animationDelay: '50ms' }}>
+                    <div className="flex items-center gap-2 mb-4">
+                        <div className="p-1.5 bg-brand-accent rounded-md text-gray-900">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                        </div>
+                        <h3 className="text-xl font-bold text-brand-text">Latest Performance</h3>
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                        {latestContent.map(video => (
+                            <LatestVideoCard key={video.id} video={video} />
+                        ))}
+                    </div>
+                </div>
+            )}
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 <div className="animate-entry" style={{ animationDelay: '100ms' }}>
