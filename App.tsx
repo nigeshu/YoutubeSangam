@@ -189,7 +189,7 @@ function App() {
 
     // Prioritize TrackView if selected, as it only needs a user
     if (selectedView === 'track' && user) {
-        return <TrackView user={user} />;
+        return <TrackView user={user} channelInfo={channelInfo} />;
     }
 
     if (!channelInfo) {

@@ -1,12 +1,150 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { db } from '../services/firebase';
-import type { Goal, RawgGame, LibraryGame } from '../types';
+import type { Goal, RawgGame, LibraryGame, ChannelInfo } from '../types';
 
 interface TrackViewProps {
     user: any; // Firebase user object
+    channelInfo: ChannelInfo | null;
 }
 
 const RAWG_API_KEY = '6b079d937bdd41559fd6680995dcac9d';
+
+const formatSubscribers = (num: number) => {
+    if (num >= 1000000) return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+    return num.toString();
+};
+
+const MilestoneTracker: React.FC<{ subscribers: number }> = ({ subscribers }) => {
+    
+    const milestones = useMemo(() => {
+        const ms = [100, 500];
+        let current = 1000;
+        
+        // 1k to 10k
+        while (current <= 10000) {
+            ms.push(current);
+            current += 1000;
+        }
+        
+        // 10k to 100k
+        current = 20000;
+        while (current <= 100000) {
+            ms.push(current);
+            current += 10000;
+        }
+        
+        // 100k to 1M
+        current = 200000;
+        while (current <= 1000000) {
+            ms.push(current);
+            current += 100000;
+        }
+
+        // 1M+
+        current = 2000000;
+        // Generate a few more until we are well past the current subscriber count
+        while (ms[ms.length - 1] < subscribers * 2 || ms.length < 50) {
+             ms.push(current);
+             current += 1000000;
+        }
+
+        return ms;
+    }, [subscribers]);
+
+    const { displayMilestones, currentGoalIndex } = useMemo(() => {
+        const nextGoalIndex = milestones.findIndex(m => m > subscribers);
+        const goalIndex = nextGoalIndex === -1 ? milestones.length - 1 : nextGoalIndex;
+        
+        // Logic: Show current goal, plus maybe 1 future, and 5 past.
+        const startIndex = Math.max(0, goalIndex - 5);
+        const endIndex = Math.min(milestones.length, goalIndex + 2);
+        
+        const slice = milestones.slice(startIndex, endIndex);
+        // We need to know which index in the *slice* corresponds to the next goal to highlight it
+        // slice[i] == milestones[goalIndex]
+        
+        return { 
+            displayMilestones: slice,
+            currentGoalIndex: goalIndex 
+        };
+    }, [milestones, subscribers]);
+
+
+    return (
+        <div className="bg-brand-surface border border-brand-surface-light rounded-lg p-6 animate-entry">
+            <div className="mb-8">
+                 <h3 className="text-xl font-bold text-brand-text">Subscriber Milestones</h3>
+                 <p className="text-brand-text-secondary text-sm">Your journey to the top. Milestones update automatically.</p>
+            </div>
+
+            <div className="relative flex flex-col-reverse gap-8 max-w-lg mx-auto py-4">
+                {/* Vertical Line */}
+                <div className="absolute left-6 top-4 bottom-4 w-0.5 bg-brand-surface-light"></div>
+
+                {displayMilestones.map((milestone) => {
+                    const isCompleted = subscribers >= milestone;
+                    const isNextGoal = !isCompleted && milestones.find(m => m > subscribers) === milestone;
+                    const isLocked = !isCompleted && !isNextGoal;
+
+                    // Calculate progress for next goal
+                    let progressPercent = 0;
+                    if (isNextGoal) {
+                         const prevMilestoneIndex = milestones.indexOf(milestone) - 1;
+                         const prevMilestone = prevMilestoneIndex >= 0 ? milestones[prevMilestoneIndex] : 0;
+                         const range = milestone - prevMilestone;
+                         const current = subscribers - prevMilestone;
+                         progressPercent = Math.min(100, Math.max(0, (current / range) * 100));
+                    }
+
+                    return (
+                        <div key={milestone} className={`relative flex items-center gap-6 ${isLocked ? 'opacity-40 grayscale' : ''}`}>
+                            {/* Node Circle */}
+                            <div className={`
+                                z-10 w-12 h-12 rounded-full border-4 flex items-center justify-center flex-shrink-0 transition-all duration-500
+                                ${isCompleted ? 'bg-brand-accent border-brand-accent text-gray-900' : ''}
+                                ${isNextGoal ? 'bg-brand-bg border-brand-accent text-brand-accent animate-pulse shadow-[0_0_15px_rgba(255,255,255,0.3)]' : ''}
+                                ${isLocked ? 'bg-brand-surface border-brand-surface-light text-brand-text-secondary' : ''}
+                            `}>
+                                {isCompleted ? (
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                ) : (
+                                    <span className="text-xs font-bold">{isNextGoal ? 'GOAL' : ''}</span>
+                                )}
+                            </div>
+
+                            {/* Content */}
+                            <div className="flex-1">
+                                <div className="flex items-baseline justify-between mb-1">
+                                    <span className={`text-2xl font-bold ${isCompleted || isNextGoal ? 'text-brand-text' : 'text-brand-text-secondary'}`}>
+                                        {formatSubscribers(milestone)}
+                                    </span>
+                                    {isCompleted && <span className="text-xs font-semibold text-brand-accent uppercase tracking-wider">Completed</span>}
+                                    {isNextGoal && <span className="text-xs font-semibold text-brand-text-secondary">Current Progress</span>}
+                                </div>
+                                
+                                {isNextGoal && (
+                                    <div className="w-full bg-brand-surface-light rounded-full h-2 mt-2 overflow-hidden">
+                                        <div 
+                                            className="bg-brand-accent h-full rounded-full transition-all duration-1000 ease-out"
+                                            style={{ width: `${progressPercent}%` }}
+                                        ></div>
+                                    </div>
+                                )}
+                                {isNextGoal && (
+                                    <p className="text-xs text-brand-text-secondary mt-1 text-right">{Math.round(progressPercent)}% to go</p>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+};
 
 const GoalTracker: React.FC<{ user: any }> = ({ user }) => {
     const [goals, setGoals] = useState<Goal[]>([]);
@@ -310,8 +448,8 @@ const GameLibrary: React.FC<{
 };
 
 
-export const TrackView: React.FC<TrackViewProps> = ({ user }) => {
-    const [activeTab, setActiveTab] = useState<'goals' | 'gameSearch' | 'gameLibrary'>('goals');
+export const TrackView: React.FC<TrackViewProps> = ({ user, channelInfo }) => {
+    const [activeTab, setActiveTab] = useState<'goals' | 'gameSearch' | 'gameLibrary' | 'milestones'>('goals');
     
     // State and logic from GameManager
     const [searchQuery, setSearchQuery] = useState('');
@@ -437,6 +575,10 @@ export const TrackView: React.FC<TrackViewProps> = ({ user }) => {
         gameLibrary: {
             title: 'Game Library',
             description: "View and manage your collection of games."
+        },
+        milestones: {
+            title: 'Milestones',
+            description: "Visualize your subscriber growth with automatic milestones."
         }
     };
     const currentTab = tabInfo[activeTab];
@@ -448,10 +590,10 @@ export const TrackView: React.FC<TrackViewProps> = ({ user }) => {
             <p className="text-brand-text-secondary">{currentTab.description}</p>
           </div>
 
-          <div className="flex border-b border-brand-surface-light">
+          <div className="flex border-b border-brand-surface-light overflow-x-auto">
               <button
                   onClick={() => setActiveTab('goals')}
-                  className={`px-4 py-2 text-sm font-semibold transition-colors focus:outline-none ${
+                  className={`px-4 py-2 text-sm font-semibold transition-colors focus:outline-none whitespace-nowrap ${
                       activeTab === 'goals'
                           ? 'border-b-2 border-brand-accent text-brand-text'
                           : 'text-brand-text-secondary hover:text-brand-text'
@@ -461,7 +603,7 @@ export const TrackView: React.FC<TrackViewProps> = ({ user }) => {
               </button>
               <button
                   onClick={() => setActiveTab('gameSearch')}
-                  className={`px-4 py-2 text-sm font-semibold transition-colors focus:outline-none ${
+                  className={`px-4 py-2 text-sm font-semibold transition-colors focus:outline-none whitespace-nowrap ${
                       activeTab === 'gameSearch'
                           ? 'border-b-2 border-brand-accent text-brand-text'
                           : 'text-brand-text-secondary hover:text-brand-text'
@@ -471,13 +613,23 @@ export const TrackView: React.FC<TrackViewProps> = ({ user }) => {
               </button>
               <button
                   onClick={() => setActiveTab('gameLibrary')}
-                  className={`px-4 py-2 text-sm font-semibold transition-colors focus:outline-none ${
+                  className={`px-4 py-2 text-sm font-semibold transition-colors focus:outline-none whitespace-nowrap ${
                       activeTab === 'gameLibrary'
                           ? 'border-b-2 border-brand-accent text-brand-text'
                           : 'text-brand-text-secondary hover:text-brand-text'
                   }`}
               >
                   Game Library
+              </button>
+              <button
+                  onClick={() => setActiveTab('milestones')}
+                  className={`px-4 py-2 text-sm font-semibold transition-colors focus:outline-none whitespace-nowrap ${
+                      activeTab === 'milestones'
+                          ? 'border-b-2 border-brand-accent text-brand-text'
+                          : 'text-brand-text-secondary hover:text-brand-text'
+                  }`}
+              >
+                  Milestones
               </button>
           </div>
 
@@ -506,6 +658,19 @@ export const TrackView: React.FC<TrackViewProps> = ({ user }) => {
                     handleRatingChange={handleRatingChange}
                     error={error}
                 />
+              )}
+              {activeTab === 'milestones' && (
+                  channelInfo ? (
+                    <MilestoneTracker subscribers={channelInfo.subscribers} />
+                  ) : (
+                      <div className="bg-brand-surface border border-brand-surface-light rounded-lg p-8 text-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-brand-text-secondary mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <h3 className="text-lg font-bold text-brand-text mb-2">No Channel Data Found</h3>
+                          <p className="text-brand-text-secondary">Please analyze a channel using the search bar above to see subscriber milestones.</p>
+                      </div>
+                  )
               )}
           </div>
         </div>
