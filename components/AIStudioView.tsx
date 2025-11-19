@@ -1,7 +1,7 @@
 // FIX: Import 'useMemo' from 'react' to resolve the 'Cannot find name useMemo' error.
 import React, { useState, useEffect, useMemo } from 'react';
 import { db } from '../services/firebase';
-import { Type } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 
 interface AIStudioViewProps {
     user: any;
@@ -152,20 +152,27 @@ ${sampleDescription}
         };
 
         try {
-            const response = await fetch('/api/generate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+
+            const response = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: schema,
                 },
-                body: JSON.stringify({ prompt, schema }),
             });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `Request failed with status ${response.status}`);
+            const jsonText = response.text?.trim();
+
+            if (!jsonText) {
+                throw new Error("Received an empty or invalid response from the AI. Please try again.");
             }
 
-            const data = await response.json();
+            // Robust parsing: Clean potential markdown wrappers from the response
+            const cleanedJsonText = jsonText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+            const data = JSON.parse(cleanedJsonText);
+            
             setGeneratedContent(data);
 
         } catch (err) {

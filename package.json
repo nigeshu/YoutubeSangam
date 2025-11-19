@@ -1,8 +1,0 @@
-{
-  "name": "youtube-sangam-serverless",
-  "version": "1.0.0",
-  "description": "Dependencies for Vercel serverless functions.",
-  "dependencies": {
-    "@google/genai": "^1.28.0"
-  }
-}
