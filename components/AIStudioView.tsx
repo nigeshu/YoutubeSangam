@@ -35,6 +35,32 @@ const GeneratedSection: React.FC<{ title: string; content: string | string[]; on
     </div>
 );
 
+const ErrorModal = ({ message, onClose }: { message: string, onClose: () => void }) => (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-entry" onClick={onClose}>
+        <div 
+            className="bg-brand-surface border border-red-700 rounded-lg p-6 w-full max-w-md relative text-center shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+        >
+            <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-900/50">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+            <h3 className="text-xl font-bold text-brand-text mt-4">Generation Failed</h3>
+            <p className="text-brand-text-secondary mt-2">{message}</p>
+            <div className="mt-6">
+              <button
+                onClick={onClose}
+                type="button"
+                className="w-full inline-flex justify-center rounded-md border border-brand-surface-light px-4 py-2 bg-brand-surface-light text-base font-medium text-brand-text hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:w-auto sm:text-sm"
+              >
+                Close
+              </button>
+            </div>
+        </div>
+    </div>
+);
+
 
 export const AIStudioView: React.FC<AIStudioViewProps> = ({ user }) => {
     // Inputs
@@ -166,7 +192,7 @@ ${sampleDescription}
             const jsonText = response.text?.trim();
 
             if (!jsonText) {
-                throw new Error("Received an empty or invalid response from the AI. Please try again.");
+                throw new Error("Received an empty or invalid response from the AI. This can happen due to safety settings or network issues. Please try again with a slightly different prompt.");
             }
 
             // Robust parsing: Clean potential markdown wrappers from the response
@@ -177,7 +203,7 @@ ${sampleDescription}
 
         } catch (err) {
             console.error(err);
-            setError(err instanceof Error ? err.message : "An unknown error occurred during generation.");
+            setError(err instanceof Error ? err.message : "An unknown error occurred. Please check your API key and network connection.");
         } finally {
             setIsLoading(false);
         }
@@ -270,7 +296,7 @@ ${sampleDescription}
                              <p>AI is thinking...</p>
                         </div>
                     )}
-                    {error && <p className="text-red-400 text-center">{error}</p>}
+                    
                     {!isLoading && !error && !generatedContent && (
                         <div className="flex flex-col items-center justify-center h-full text-center text-brand-text-secondary">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -303,6 +329,7 @@ ${sampleDescription}
                     Copied {copiedItem}!
                 </div>
             )}
+            {error && <ErrorModal message={error} onClose={() => setError(null)} />}
         </div>
     );
 };
