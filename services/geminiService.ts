@@ -204,7 +204,7 @@ export const fetchChannelData = async (channelUrl: string): Promise<FetchResult>
         
         return {
             videos: sortedVideos,
-            channelInfo: { name, subscribers },
+            channelInfo: { name, subscribers, id: channelId },
             playlists: playlists.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
         };
 
