@@ -1,7 +1,7 @@
 // FIX: Import 'useMemo' from 'react' to resolve the 'Cannot find name useMemo' error.
 import React, { useState, useEffect, useMemo } from 'react';
 import { db } from '../services/firebase';
-import { GoogleGenAI, Type } from "@google/genai";
+import { Type } from "@google/genai";
 
 interface AIStudioViewProps {
     user: any;
@@ -103,8 +103,6 @@ export const AIStudioView: React.FC<AIStudioViewProps> = ({ user }) => {
         setIsLoading(true);
         setError(null);
         setGeneratedContent(null);
-        
-        const ai = new GoogleGenAI({});
 
         const sampleDescriptionPrompt = isDescriptionLocked && sampleDescription
             ? `
@@ -139,35 +137,36 @@ ${sampleDescription}
             **OUTPUT FORMAT:**
             Generate a response in a structured JSON format.
         `;
+        
+        const schema = {
+            type: Type.OBJECT,
+            properties: {
+                title: { type: Type.STRING },
+                description: { type: Type.STRING },
+                tags: {
+                    type: Type.ARRAY,
+                    items: { type: Type.STRING }
+                },
+            },
+            required: ["title", "description", "tags"]
+        };
 
         try {
-            const response = await ai.models.generateContent({
-                model: "gemini-2.5-flash",
-                contents: prompt,
-                config: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: Type.OBJECT,
-                        properties: {
-                            title: { type: Type.STRING },
-                            description: { type: Type.STRING },
-                            tags: {
-                                type: Type.ARRAY,
-                                items: { type: Type.STRING }
-                            },
-                        },
-                        required: ["title", "description", "tags"]
-                    },
+            const response = await fetch('/api/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
                 },
+                body: JSON.stringify({ prompt, schema }),
             });
-            
-            const jsonText = response.text?.trim();
-            if (jsonText) {
-                const parsed = JSON.parse(jsonText);
-                setGeneratedContent(parsed);
-            } else {
-                throw new Error("Received an empty response from the AI.");
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Request failed with status ${response.status}`);
             }
+
+            const data = await response.json();
+            setGeneratedContent(data);
 
         } catch (err) {
             console.error(err);
