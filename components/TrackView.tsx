@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { db } from '../services/firebase';
 import type { Goal, RawgGame, LibraryGame, ChannelInfo, Video } from '../types';
@@ -789,10 +788,6 @@ export const TrackView: React.FC<TrackViewProps> = ({ user, channelInfo, videos 
     const [error, setError] = useState<string | null>(null);
 
     const gamesCollection = db.collection('games');
-    
-    const uploadUrl = channelInfo?.id 
-        ? `https://studio.youtube.com/channel/${channelInfo.id}/videos?d=ud`
-        : 'https://studio.youtube.com/video/upload';
 
     useEffect(() => {
         if (!user) return;
@@ -921,22 +916,9 @@ export const TrackView: React.FC<TrackViewProps> = ({ user, channelInfo, videos 
 
     return (
       <div className="space-y-6 sm:space-y-8 animate-entry">
-          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-            <div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-brand-text mb-1">{currentTab.title}</h2>
-                <p className="text-brand-text-secondary">{currentTab.description}</p>
-            </div>
-            <a
-                href={uploadUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-shrink-0 px-5 py-2.5 bg-brand-accent text-gray-900 rounded-lg font-bold hover:bg-brand-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-brand-bg focus:ring-brand-accent transition-all transform hover:scale-105 shadow-lg shadow-brand-accent/10 flex items-center justify-center gap-2"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                </svg>
-                <span>Upload Video</span>
-            </a>
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-brand-text mb-1">{currentTab.title}</h2>
+            <p className="text-brand-text-secondary">{currentTab.description}</p>
           </div>
 
           <div className="flex border-b border-brand-surface-light overflow-x-auto">

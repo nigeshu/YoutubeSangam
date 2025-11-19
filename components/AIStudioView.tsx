@@ -103,6 +103,8 @@ export const AIStudioView: React.FC<AIStudioViewProps> = ({ user }) => {
         setIsLoading(true);
         setError(null);
         setGeneratedContent(null);
+        
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
         const sampleDescriptionPrompt = isDescriptionLocked && sampleDescription
             ? `
@@ -137,43 +139,35 @@ ${sampleDescription}
             **OUTPUT FORMAT:**
             Generate a response in a structured JSON format.
         `;
-        
-        const schema = {
-            type: Type.OBJECT,
-            properties: {
-                title: { type: Type.STRING },
-                description: { type: Type.STRING },
-                tags: {
-                    type: Type.ARRAY,
-                    items: { type: Type.STRING }
-                },
-            },
-            required: ["title", "description", "tags"]
-        };
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
-
             const response = await ai.models.generateContent({
                 model: "gemini-2.5-flash",
                 contents: prompt,
                 config: {
                     responseMimeType: "application/json",
-                    responseSchema: schema,
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            title: { type: Type.STRING },
+                            description: { type: Type.STRING },
+                            tags: {
+                                type: Type.ARRAY,
+                                items: { type: Type.STRING }
+                            },
+                        },
+                        required: ["title", "description", "tags"]
+                    },
                 },
             });
-
-            const jsonText = response.text?.trim();
-
-            if (!jsonText) {
-                throw new Error("Received an empty or invalid response from the AI. Please try again.");
-            }
-
-            // Robust parsing: Clean potential markdown wrappers from the response
-            const cleanedJsonText = jsonText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-            const data = JSON.parse(cleanedJsonText);
             
-            setGeneratedContent(data);
+            const jsonText = response.text?.trim();
+            if (jsonText) {
+                const parsed = JSON.parse(jsonText);
+                setGeneratedContent(parsed);
+            } else {
+                throw new Error("Received an empty response from the AI.");
+            }
 
         } catch (err) {
             console.error(err);
