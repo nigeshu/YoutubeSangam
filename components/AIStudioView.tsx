@@ -104,7 +104,7 @@ export const AIStudioView: React.FC<AIStudioViewProps> = ({ user }) => {
         setError(null);
         setGeneratedContent(null);
         
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+        const ai = new GoogleGenAI({});
 
         const sampleDescriptionPrompt = isDescriptionLocked && sampleDescription
             ? `
