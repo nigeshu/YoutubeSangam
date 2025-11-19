@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import type { Video, ChannelInfo, Playlist } from './types';
 import { fetchChannelData } from './services/geminiService';
@@ -15,8 +14,9 @@ import { OnboardingTour } from './components/OnboardingTour';
 import AuthScreen from './components/AuthScreen';
 import { auth, db } from './services/firebase';
 import { TrackView } from './components/TrackView';
+import { AIStudioView } from './components/AIStudioView';
 
-type View = 'featured' | 'calendar' | 'analytics' | 'track' | 'playlist' | 'community';
+type View = 'featured' | 'calendar' | 'analytics' | 'track' | 'playlist' | 'community' | 'ai-studio';
 
 function App() {
   const [user, setUser] = useState<any>(null);
@@ -129,7 +129,7 @@ function App() {
   };
 
   const handleSelectView = (view: View) => {
-    if ((view === 'track' || view === 'community') && !user) {
+    if ((view === 'track' || view === 'community' || view === 'ai-studio') && !user) {
         setViewAfterAuth(view);
         setShowAuthScreen(true);
     } else {
@@ -187,9 +187,14 @@ function App() {
         );
     }
 
-    // Prioritize TrackView if selected, as it only needs a user
-    if (selectedView === 'track' && user) {
-        return <TrackView user={user} channelInfo={channelInfo} />;
+    // Prioritize views that only need a user
+    if (user && (selectedView === 'track' || selectedView === 'ai-studio')) {
+        if (selectedView === 'track') {
+            return <TrackView user={user} channelInfo={channelInfo} videos={videos} />;
+        }
+        if (selectedView === 'ai-studio') {
+            return <AIStudioView user={user} />;
+        }
     }
 
     if (!channelInfo) {
@@ -207,7 +212,7 @@ function App() {
         return <PlaylistView playlists={playlists} />;
       case 'community':
         return <CommunityView videos={videos} />;
-      // 'track' is handled above for logged-in users
+      // 'track' & 'ai-studio' are handled above for logged-in users
       default:
         return <WelcomeScreen user={user} onTrackClick={handleWelcomeScreenTrackClick} />;
     }
