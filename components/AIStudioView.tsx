@@ -1,6 +1,7 @@
 // FIX: Import 'useMemo' from 'react' to resolve the 'Cannot find name useMemo' error.
 import React, { useState, useEffect, useMemo } from 'react';
 import { db } from '../services/firebase';
+import { GoogleGenAI, Type } from "@google/genai";
 
 interface AIStudioViewProps {
     user: any;
@@ -133,12 +134,14 @@ export const AIStudioView: React.FC<AIStudioViewProps> = ({ user }) => {
         setError(null);
         setGeneratedContent(null);
         
-        // Vercel free tier timeout is 10s. We set a client-side timeout to prevent infinite loading.
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 9500); // 9.5 seconds
+        try {
+            if (!process.env.API_KEY) {
+                throw new Error("API_KEY environment variable not configured.");
+            }
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
-        const sampleDescriptionPrompt = isDescriptionLocked && sampleDescription
-            ? `
+            const sampleDescriptionPrompt = isDescriptionLocked && sampleDescription
+                ? `
 **CRITICAL DESCRIPTION INSTRUCTIONS:**
 You are a formatting expert. Your task is to populate the provided template. You MUST follow these rules without deviation:
 1.  **TEMPLATE IS MANDATORY:** Use the following text as a strict, character-for-character template for the description.
@@ -151,59 +154,72 @@ You are a formatting expert. Your task is to populate the provided template. You
 ${sampleDescription}
 ---
 `
-            : `For the description, create a well-formatted text with clear sections (e.g., an introduction, key moments or timestamps, a call to action, and links to social media). Ensure paragraphs are separated by an empty line for readability.`;
+                : `For the description, create a well-formatted text with clear sections (e.g., an introduction, key moments or timestamps, a call to action, and links to social media). Ensure paragraphs are separated by an empty line for readability.`;
 
-        const prompt = `
-            You are an expert YouTube content strategist for gaming channels.
-            Generate a compelling title, description, and tags for a new video.
+            const prompt = `
+                You are an expert YouTube content strategist for gaming channels.
+                Generate a compelling title, description, and tags for a new video.
 
-            **VIDEO REQUIREMENTS:**
-            ${contentRequirements}
+                **VIDEO REQUIREMENTS:**
+                ${contentRequirements}
 
-            ${isTitleLocked && sampleTitle ? `**TITLE STYLE REFERENCE:**\nUse this as a strong reference for the title's style, but adapt it to the new video's content:\n${sampleTitle}` : ''}
+                ${isTitleLocked && sampleTitle ? `**TITLE STYLE REFERENCE:**\nUse this as a strong reference for the title's style, but adapt it to the new video's content:\n${sampleTitle}` : ''}
+                
+                ${sampleDescriptionPrompt}
+
+                **TAGS INSTRUCTIONS:**
+                Provide a mix of broad and specific keywords relevant to the game, the video's content, and the channel's niche.
+
+                **OUTPUT FORMAT:**
+                Generate a response in a structured JSON format.
+            `;
             
-            ${sampleDescriptionPrompt}
-
-            **TAGS INSTRUCTIONS:**
-            Provide a mix of broad and specific keywords relevant to the game, the video's content, and the channel's niche.
-
-            **OUTPUT FORMAT:**
-            Generate a response in a structured JSON format.
-        `;
-        
-        try {
-            const response = await fetch('/api/generate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
+            const schema = {
+                type: Type.OBJECT,
+                properties: {
+                    title: { type: Type.STRING },
+                    description: { type: Type.STRING },
+                    tags: {
+                        type: Type.ARRAY,
+                        items: { type: Type.STRING }
+                    },
                 },
-                body: JSON.stringify({ prompt }),
-                signal: controller.signal, // Add the abort signal to the fetch request
+                required: ["title", "description", "tags"]
+            };
+
+            const response = await ai.models.generateContent({
+              model: "gemini-2.5-flash",
+              contents: prompt,
+              config: {
+                responseMimeType: "application/json",
+                responseSchema: schema,
+              },
             });
 
-            clearTimeout(timeoutId);
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                // The serverless function should return a JSON with an error message
-                throw new Error(data.error || 'An unexpected error occurred.');
+            const jsonText = response.text?.trim();
+            if (!jsonText) {
+                throw new Error("Received an empty response from the AI. The API key might be invalid or the service may be temporarily down.");
             }
+
+            // The AI might wrap the JSON in ```json ... ```, so clean it.
+            const cleanedJsonText = jsonText.replace(/^```json\n/, '').replace(/\n```$/, '');
             
-            setGeneratedContent(data);
+            try {
+                const parsed = JSON.parse(cleanedJsonText);
+                setGeneratedContent(parsed);
+            } catch (parseError) {
+                console.error("JSON Parsing Error:", parseError);
+                console.error("Raw AI Response:", cleanedJsonText);
+                throw new Error("The AI returned a response that could not be understood. Please try again.");
+            }
 
         } catch (err) {
-            clearTimeout(timeoutId);
             if (err instanceof Error) {
-                if (err.name === 'AbortError') {
-                    setError("The request timed out as the AI is taking too long to respond. This can happen on Vercel's free plan. Please try again or simplify your request.");
-                } else {
-                    setError(err.message);
-                }
+                console.error("AI Generation Error:", err);
+                setError(err.message);
             } else {
                  setError("An unknown error occurred during generation.");
             }
-            console.error(err);
         } finally {
             setIsLoading(false);
         }
