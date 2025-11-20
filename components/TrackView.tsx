@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { db } from '../services/firebase';
 import type { Goal, RawgGame, LibraryGame, ChannelInfo, Video } from '../types';
@@ -914,11 +915,28 @@ export const TrackView: React.FC<TrackViewProps> = ({ user, channelInfo, videos 
     };
     const currentTab = tabInfo[activeTab];
 
+    const uploadUrl = channelInfo?.id
+        ? `https://studio.youtube.com/channel/${channelInfo.id}/videos?d=ud`
+        : 'https://studio.youtube.com/upload';
+
     return (
       <div className="space-y-6 sm:space-y-8 animate-entry">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-brand-text mb-1">{currentTab.title}</h2>
-            <p className="text-brand-text-secondary">{currentTab.description}</p>
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+            <div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-brand-text mb-1">{currentTab.title}</h2>
+                <p className="text-brand-text-secondary">{currentTab.description}</p>
+            </div>
+            <a
+                href={uploadUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-brand-accent text-gray-900 rounded-md font-semibold hover:bg-brand-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-brand-bg focus:ring-brand-accent transition-transform transform hover:scale-105"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                <span>Upload Video</span>
+            </a>
           </div>
 
           <div className="flex border-b border-brand-surface-light overflow-x-auto">

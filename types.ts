@@ -11,6 +11,7 @@ export interface Video {
 }
 
 export interface ChannelInfo {
+  id: string;
   name: string;
   subscribers: number;
 }
