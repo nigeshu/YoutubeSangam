@@ -1,0 +1,5 @@
+{
+  "name": "youtube-sangam",
+  "version": "1.0.0",
+  "description": "A simple package.json to satisfy Vercel's build system for a static client-side application."
+}
