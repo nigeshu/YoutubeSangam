@@ -66,3 +66,12 @@ export interface Comment {
   replies?: Comment[]; // For nested or local replies
   isOwner?: boolean; // To distinguish user replies
 }
+
+export interface ScheduledEvent {
+  id: string; // Firestore doc ID
+  userId: string;
+  date: string; // YYYY-MM-DD format
+  time: string; // HH:mm format
+  title: string;
+  createdAt: any; // Firebase Timestamp
+}

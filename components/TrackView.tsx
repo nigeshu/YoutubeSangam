@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { db } from '../services/firebase';
-import type { Goal, RawgGame, LibraryGame, ChannelInfo, Video } from '../types';
+import type { Goal, RawgGame, LibraryGame, ChannelInfo, Video, ScheduledEvent } from '../types';
 
 interface TrackViewProps {
     user: any; // Firebase user object
@@ -775,9 +774,180 @@ const GameLibrary: React.FC<{
     );
 };
 
+// Fix: Add ScheduleTracker component definition
+const ScheduleTracker: React.FC<{ user: any }> = ({ user }) => {
+    const [events, setEvents] = useState<ScheduledEvent[]>([]);
+    const [newEventTitle, setNewEventTitle] = useState('');
+    const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+    const [newEventDate, setNewEventDate] = useState(todayStr);
+    const [newEventTime, setNewEventTime] = useState('12:00');
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const eventsCollection = db.collection('scheduledEvents');
+
+    useEffect(() => {
+        if (!user) return;
+        setLoading(true);
+        const unsubscribe = eventsCollection
+            .where('userId', '==', user.uid)
+            .where('date', '>=', todayStr)
+            .orderBy('date', 'asc')
+            .orderBy('time', 'asc')
+            .onSnapshot((snapshot: any) => {
+                const fetchedEvents: ScheduledEvent[] = snapshot.docs.map((doc: any) => ({
+                    id: doc.id,
+                    ...doc.data()
+                } as ScheduledEvent));
+                setEvents(fetchedEvents);
+                setLoading(false);
+            }, (err: any) => {
+                console.error('Firestore subscription error:', err);
+                let detailedError = 'Failed to fetch schedule. Please check your internet connection and permissions.';
+                if (err.code === 'failed-precondition') {
+                    detailedError = 'A database index is required. In your Firebase console, create a composite index for the "scheduledEvents" collection on: "userId" (ascending), "date" (ascending), and "time" (ascending).';
+                } else if (err.code === 'permission-denied') {
+                    detailedError = 'You do not have permission to view this schedule. Please check your Firestore security rules.';
+                }
+                setError(detailedError);
+                setLoading(false);
+            });
+        
+        return () => unsubscribe();
+    }, [user, todayStr]);
+
+    const handleAddEvent = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newEventTitle.trim() || !newEventDate || !newEventTime) {
+            setError('Please fill out all fields.');
+            return;
+        }
+        setError(null);
+
+        try {
+            await eventsCollection.add({
+                title: newEventTitle,
+                date: newEventDate,
+                time: newEventTime,
+                userId: user.uid,
+                createdAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+            });
+            setNewEventTitle('');
+        } catch (err: any) {
+            console.error(err);
+            setError(`Failed to add event: ${err.message}`);
+        }
+    };
+
+    const handleDeleteEvent = async (id: string) => {
+        setError(null);
+        try {
+            await eventsCollection.doc(id).delete();
+        } catch (err: any) {
+            console.error(err);
+            setError(`Failed to delete event: ${err.message}`);
+        }
+    };
+
+    // Group events by date
+    const eventsByDate = useMemo(() => {
+        return events.reduce((acc, event) => {
+            const date = event.date;
+            if (!acc[date]) {
+                acc[date] = [];
+            }
+            acc[date].push(event);
+            return acc;
+        }, {} as Record<string, ScheduledEvent[]>);
+    }, [events]);
+
+    return (
+        <div className="space-y-6 animate-entry">
+            <div className="bg-brand-surface border border-brand-surface-light rounded-lg p-4 sm:p-6">
+                <h3 className="text-lg font-bold mb-4">Add New Event</h3>
+                <form onSubmit={handleAddEvent} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
+                    <div className="md:col-span-2">
+                        <label htmlFor="event-title" className="text-sm font-medium text-brand-text-secondary">Title</label>
+                        <input
+                            id="event-title"
+                            type="text"
+                            value={newEventTitle}
+                            onChange={(e) => setNewEventTitle(e.target.value)}
+                            placeholder="e.g., Record new video"
+                            className="mt-1 block w-full bg-brand-bg border border-brand-surface-light rounded-md py-2 px-4 text-brand-text placeholder-brand-text-secondary focus:outline-none focus:ring-2 focus:ring-brand-accent"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="event-date" className="text-sm font-medium text-brand-text-secondary">Date</label>
+                        <input
+                            id="event-date"
+                            type="date"
+                            value={newEventDate}
+                            onChange={(e) => setNewEventDate(e.target.value)}
+                            min={todayStr}
+                            className="mt-1 block w-full bg-brand-bg border border-brand-surface-light rounded-md py-2 px-4 text-brand-text placeholder-brand-text-secondary focus:outline-none focus:ring-2 focus:ring-brand-accent"
+                            required
+                        />
+                    </div>
+                     <div>
+                        <label htmlFor="event-time" className="text-sm font-medium text-brand-text-secondary">Time</label>
+                        <input
+                            id="event-time"
+                            type="time"
+                            value={newEventTime}
+                            onChange={(e) => setNewEventTime(e.target.value)}
+                            className="mt-1 block w-full bg-brand-bg border border-brand-surface-light rounded-md py-2 px-4 text-brand-text placeholder-brand-text-secondary focus:outline-none focus:ring-2 focus:ring-brand-accent"
+                            required
+                        />
+                    </div>
+                    <button type="submit" className="md:col-start-4 px-5 py-2 bg-brand-accent text-gray-900 rounded-md font-semibold hover:bg-brand-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-brand-bg focus:ring-brand-accent">
+                        Schedule
+                    </button>
+                </form>
+            </div>
+            
+            {error && <p className="text-red-400 text-center py-2 bg-red-900/50 border border-red-700 rounded-lg">{error}</p>}
+            
+            <div className="bg-brand-surface border border-brand-surface-light rounded-lg p-4 sm:p-6">
+                <h3 className="text-lg font-bold mb-4">Upcoming Schedule</h3>
+                {loading ? (
+                    <p className="text-brand-text-secondary">Loading schedule...</p>
+                ) : Object.keys(eventsByDate).length === 0 ? (
+                    <p className="text-brand-text-secondary">Your schedule is empty. Add an event above to get started!</p>
+                ) : (
+                    <div className="space-y-6">
+                        {Object.entries(eventsByDate).map(([date, dateEvents]) => (
+                            <div key={date}>
+                                <h4 className="font-bold text-brand-text mb-2 border-b border-brand-surface-light pb-2">
+                                    {new Date(date + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                </h4>
+                                <ul className="space-y-3 mt-3">
+                                    {dateEvents.map((event, index) => (
+                                        <li key={event.id} className="flex items-center justify-between bg-brand-bg p-4 rounded-md border border-brand-surface-light animate-entry"
+                                            style={{ animationDelay: `${index * 50}ms` }}
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="font-mono text-brand-accent bg-brand-surface-light px-3 py-1 rounded-md">{event.time}</div>
+                                                <span className="text-brand-text">{event.title}</span>
+                                            </div>
+                                            <button onClick={() => handleDeleteEvent(event.id)} className="p-2 text-brand-text-secondary hover:text-red-400 rounded-full hover:bg-red-500/10 transition-colors">
+                                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
 
 export const TrackView: React.FC<TrackViewProps> = ({ user, channelInfo, videos }) => {
-    const [activeTab, setActiveTab] = useState<'goals' | 'gameSearch' | 'gameLibrary' | 'milestones' | 'performance'>('goals');
+    const [activeTab, setActiveTab] = useState<'goals' | 'gameSearch' | 'gameLibrary' | 'milestones' | 'performance' | 'schedule'>('goals');
     
     // State and logic from GameManager
     const [searchQuery, setSearchQuery] = useState('');
@@ -911,6 +1081,10 @@ export const TrackView: React.FC<TrackViewProps> = ({ user, channelInfo, videos 
         performance: {
             title: 'Channel Audit',
             description: "An automated deep-dive into your content strategy and performance."
+        },
+        schedule: {
+            title: 'Weekly Schedule',
+            description: 'Plan your upcoming live streams and videos for the week.'
         }
     };
     const currentTab = tabInfo[activeTab];
@@ -990,6 +1164,16 @@ export const TrackView: React.FC<TrackViewProps> = ({ user, channelInfo, videos 
               >
                   Performance
               </button>
+               <button
+                  onClick={() => setActiveTab('schedule')}
+                  className={`px-4 py-2 text-sm font-semibold transition-colors focus:outline-none whitespace-nowrap ${
+                      activeTab === 'schedule'
+                          ? 'border-b-2 border-brand-accent text-brand-text'
+                          : 'text-brand-text-secondary hover:text-brand-text'
+                  }`}
+              >
+                  Schedule
+              </button>
           </div>
 
           <div className="space-y-6">
@@ -1032,6 +1216,7 @@ export const TrackView: React.FC<TrackViewProps> = ({ user, channelInfo, videos 
                   )
               )}
               {activeTab === 'performance' && <PerformanceReport videos={videos} />}
+              {activeTab === 'schedule' && <ScheduleTracker user={user} />}
           </div>
         </div>
     );
