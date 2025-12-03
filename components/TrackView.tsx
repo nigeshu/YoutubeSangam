@@ -999,7 +999,7 @@ export const TrackView: React.FC<TrackViewProps> = ({ user, channelInfo, videos 
             const response = await fetch(`https://api.rawg.io/api/games?key=${RAWG_API_KEY}&search=${encodeURIComponent(searchQuery)}&page_size=12`);
             if (!response.ok) throw new Error('RAWG search error: Failed to fetch');
             const data = await response.json();
-            setSearchResults(data.results || []);
+            setSearchResults(data.results);
         } catch (err: any) {
             setError(err.message);
         } finally {
